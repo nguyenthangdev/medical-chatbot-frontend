@@ -1,25 +1,30 @@
 // src/hooks/useAuth.js
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 export default function useAuth() {
     const navigate = useNavigate();
 
     const logout = () => {
-        // 1. Xóa token hoặc dữ liệu user khỏi bộ nhớ (localStorage/sessionStorage)
-        localStorage.removeItem('admin_token');
+        // remove token
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
 
-        // 2. Có thể gọi thêm API báo cho Backend biết user đã đăng xuất (nếu cần)
-        // axios.post('/api/logout');
-
-        // 3. Chuyển hướng về trang đăng nhập
-        navigate('/login');
+        // redirect login
+        navigate("/login");
     };
 
-    // Sau này bạn có thể thêm hàm login() vào đây
-    const login = (token) => {
-        localStorage.setItem('admin_token', token);
-        navigate('/admin/dashboard');
+    const getUser = () => {
+        const user = localStorage.getItem("user");
+        return user ? JSON.parse(user) : null;
     };
 
-    return { logout, login };
+    const isAuthenticated = () => {
+        return !!localStorage.getItem("token");
+    };
+
+    return {
+        logout,
+        getUser,
+        isAuthenticated
+    };
 }
