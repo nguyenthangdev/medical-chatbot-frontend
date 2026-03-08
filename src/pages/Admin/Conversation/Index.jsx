@@ -1,26 +1,57 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import DataTable from '../../../components/Admin/DataTable';
+import React from "react";
+import DataTable from "../../../components/Admin/DataTable";
 
 export default function ConversationIndex() {
+
     const columns = [
-        { header: 'ID', accessor: 'id' },
-        { header: 'Người dùng', accessor: 'user' },
-        { header: 'Chủ đề', accessor: 'topic' },
-        { header: 'Cập nhật cuối', accessor: 'last_updated' },
+        { header: "ID", accessor: "id" },
+        { header: "User", accessor: "user" },
+        { header: "Topic", accessor: "topic" },
+        { header: "Last Updated", accessor: "lastUpdated" },
+        { header: "Status", accessor: "status" },
     ];
 
-    const mockData = [
-        { id: 'C001', user: 'Nguyễn Văn A', topic: 'Hỏi về triệu chứng sốt', last_updated: '10 phút trước' },
-        { id: 'C002', user: 'Trần Thị B', topic: 'Tư vấn thuốc dạ dày', last_updated: '1 giờ trước' },
+    const conversations = [
+        {
+            id: "C001",
+            user: "Nguyen Van A",
+            topic: "Fever symptoms consultation",
+            lastUpdated: "10 minutes ago",
+            status: "Active",
+        },
+        {
+            id: "C002",
+            user: "Tran Thi B",
+            topic: "Stomach medicine advice",
+            lastUpdated: "1 hour ago",
+            status: "Closed",
+        },
     ];
+
+    const handleDelete = (id) => {
+        console.log("delete conversation", id);
+    };
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">Quản lý Hội thoại</h1>
-            {/* Tạm thời có thể dùng Link thủ công ở Action cột trong file DataTable, hoặc bạn bọc toàn bộ row bằng Link. */}
-            <DataTable title="Danh sách cuộc trò chuyện" columns={columns} data={mockData} />
-            <p className="mt-4 text-sm text-gray-500">*Gợi ý: Nhấn vào chi tiết hội thoại để xem log tin nhắn.</p>
+
+            <div className="flex justify-between items-center mb-6">
+
+                <h1 className="text-2xl font-bold text-gray-800">
+                    Conversation Management
+                </h1>
+
+            </div>
+
+            <DataTable
+                title="Conversation List"
+                columns={columns}
+                data={conversations}
+                basePath="/admin/conversations"
+                onDelete={handleDelete}
+                actions={["view", "delete"]}
+            />
+
         </div>
     );
 }

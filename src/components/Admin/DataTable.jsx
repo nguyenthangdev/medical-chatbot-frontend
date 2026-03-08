@@ -6,7 +6,8 @@ export default function DataTable({
     columns,
     data,
     basePath = "",
-    onDelete
+    onDelete,
+    actions = ["view", "edit", "delete"]
 }) {
     return (
         <div className="bg-white shadow rounded-lg p-6 text-gray-800">
@@ -71,26 +72,32 @@ export default function DataTable({
 
                                     <div className="flex justify-center gap-3">
 
-                                        <Link
-                                            to={`${basePath}/${row.id}`}
-                                            className="text-gray-600 hover:text-black"
-                                        >
-                                            View
-                                        </Link>
+                                        {actions?.includes("view") && (
+                                            <Link
+                                                to={`${basePath}/${row.id}`}
+                                                className="text-gray-600 hover:text-black"
+                                            >
+                                                View
+                                            </Link>
+                                        )}
 
-                                        <Link
-                                            to={`${basePath}/${row.id}/edit`}
-                                            className="text-blue-600 hover:text-blue-800"
-                                        >
-                                            Edit
-                                        </Link>
+                                        {actions?.includes("edit") && (
+                                            <Link
+                                                to={`${basePath}/${row.id}/edit`}
+                                                className="text-blue-600 hover:text-blue-800"
+                                            >
+                                                Edit
+                                            </Link>
+                                        )}
 
-                                        <button
-                                            onClick={() => onDelete?.(row.id)}
-                                            className="text-red-600 hover:text-red-800"
-                                        >
-                                            Delete
-                                        </button>
+                                        {actions?.includes("delete") && (
+                                            <button
+                                                onClick={() => onDelete?.(row.id)}
+                                                className="text-red-600 hover:text-red-800"
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
 
                                     </div>
 
