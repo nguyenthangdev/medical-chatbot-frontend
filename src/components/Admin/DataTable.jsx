@@ -1,65 +1,140 @@
-import React from 'react';
+import React from "react";
+import { Link } from "react-router-dom";
 
-export default function DataTable({ title, columns, data }) {
+export default function DataTable({
+    title,
+    columns,
+    data,
+    basePath = "",
+    onDelete
+}) {
     return (
-        <div className="bg-white shadow-md rounded-lg p-6">
-            {/* Header: Tiêu đề & Tìm kiếm */}
-            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+        <div className="bg-white shadow rounded-lg p-6 text-gray-800">
+
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
+
+                <h2 className="text-lg font-semibold">
+                    {title}
+                </h2>
+
                 <div className="flex gap-2">
                     <input
                         type="text"
-                        placeholder="Tìm kiếm..."
-                        className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search..."
+                        className="border rounded-lg px-3 py-2"
                     />
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                        Tìm
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        Search
                     </button>
                 </div>
+
             </div>
 
-            {/* Bảng dữ liệu */}
+            {/* Table */}
             <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+
+                <table className="w-full text-left">
+
                     <thead>
-                        <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                        <tr className="border-b bg-gray-50 text-sm">
+
                             {columns.map((col, index) => (
-                                <th key={index} className="py-3 px-6 cursor-pointer hover:bg-gray-200">
-                                    {col.header} ↕
+                                <th key={index} className="py-3 px-4">
+                                    {col.header}
                                 </th>
                             ))}
-                            <th className="py-3 px-6 text-center">Hành động</th>
+
+                            <th className="py-3 px-4 text-center">
+                                Actions
+                            </th>
+
                         </tr>
                     </thead>
-                    <tbody className="text-gray-600 text-sm font-light">
-                        {data.map((row, rowIndex) => (
-                            <tr key={rowIndex} className="border-b border-gray-200 hover:bg-gray-50">
-                                {columns.map((col, colIndex) => (
-                                    <td key={colIndex} className="py-3 px-6 whitespace-nowrap">
+
+                    <tbody className="text-sm">
+
+                        {data.map((row) => (
+
+                            <tr
+                                key={row.id}
+                                className="border-b hover:bg-gray-50"
+                            >
+
+                                {columns.map((col, index) => (
+                                    <td key={index} className="py-3 px-4">
                                         {row[col.accessor]}
                                     </td>
                                 ))}
-                                <td className="py-3 px-6 text-center flex justify-center gap-2">
-                                    <button className="text-blue-500 hover:text-blue-700">Sửa</button>
-                                    <button className="text-red-500 hover:text-red-700">Xóa</button>
+
+                                <td className="py-3 px-4 text-center">
+
+                                    <div className="flex justify-center gap-3">
+
+                                        <Link
+                                            to={`${basePath}/${row.id}`}
+                                            className="text-gray-600 hover:text-black"
+                                        >
+                                            View
+                                        </Link>
+
+                                        <Link
+                                            to={`${basePath}/${row.id}/edit`}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            Edit
+                                        </Link>
+
+                                        <button
+                                            onClick={() => onDelete?.(row.id)}
+                                            className="text-red-600 hover:text-red-800"
+                                        >
+                                            Delete
+                                        </button>
+
+                                    </div>
+
                                 </td>
+
                             </tr>
+
                         ))}
+
                     </tbody>
+
                 </table>
+
             </div>
 
-            {/* Phân trang (Pagination UI) */}
-            <div className="flex justify-between items-center mt-4">
-                <span className="text-sm text-gray-600">Hiển thị 1 - 10 trên 50 kết quả</span>
+            {/* Pagination */}
+            <div className="flex justify-between items-center mt-4 text-sm">
+
+                <span>
+                    Showing 1 - 10 of 50
+                </span>
+
                 <div className="flex gap-1">
-                    <button className="px-3 py-1 border rounded hover:bg-gray-100">Trước</button>
-                    <button className="px-3 py-1 border rounded bg-blue-600 text-white">1</button>
-                    <button className="px-3 py-1 border rounded hover:bg-gray-100">2</button>
-                    <button className="px-3 py-1 border rounded hover:bg-gray-100">3</button>
-                    <button className="px-3 py-1 border rounded hover:bg-gray-100">Sau</button>
+
+                    <button className="border px-3 py-1 rounded hover:bg-gray-100 text-white">
+                        Prev
+                    </button>
+
+                    <button className="border px-3 py-1 rounded bg-blue-600 text-white">
+                        1
+                    </button>
+
+                    <button className="border px-3 py-1 rounded hover:bg-gray-100 text-white">
+                        2
+                    </button>
+
+                    <button className="border px-3 py-1 rounded hover:bg-gray-100 text-white">
+                        Next
+                    </button>
+
                 </div>
+
             </div>
+
         </div>
     );
 }

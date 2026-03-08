@@ -1,36 +1,59 @@
-// src/layouts/AdminLayout.jsx
-import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
-import Header from '../components/Admin/Header';
-// import Sidebar from '../components/Admin/Sidebar'; // Nếu bạn tách Sidebar ra file riêng thì import ở đây
+import React, { useState } from "react";
+import { Outlet } from "react-router-dom";
+import Header from "../components/Admin/Header";
+import Sidebar from "../components/Admin/Sidebar";
 
 export default function AdminLayout() {
+
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [collapsed, setCollapsed] = useState(false);
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
+
+    const toggleCollapse = () => {
+        setCollapsed(!collapsed);
+    };
+
     return (
         <div className="flex h-screen bg-gray-100">
-            {/* Sidebar giả lập (Bạn có thể tách ra file riêng tương tự Header) */}
-            <aside className="w-64 bg-gray-800 text-white flex flex-col">
-                <div className="p-4 border-b border-gray-700">
-                    <h2 className="text-xl font-bold">MedBot Admin</h2>
-                </div>
-                <nav className="flex-1 flex flex-col gap-1 p-4">
-                    <Link to="/admin/dashboard" className="p-2 hover:bg-gray-700 rounded transition">Tổng quan</Link>
-                    <Link to="/admin/users" className="p-2 hover:bg-gray-700 rounded transition">Người dùng</Link>
-                    <Link to="/admin/conversations" className="p-2 hover:bg-gray-700 rounded transition">Hội thoại</Link>
-                    <Link to="/admin/messages" className="p-2 hover:bg-gray-700 rounded transition">Tin nhắn</Link>
-                    <Link to="/admin/settings" className="p-2 hover:bg-gray-700 rounded transition">Cài đặt</Link>
-                </nav>
-            </aside>
 
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Mobile overlay */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/40 z-30 md:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                />
+            )}
 
-                {/* Đưa Component Header vào đây */}
-                <Header />
+            {/* Sidebar */}
+            <Sidebar
+                open={sidebarOpen}
+                collapsed={collapsed}
+                toggleCollapse={toggleCollapse}
+            />
 
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-                    <Outlet />
+            {/* Main area */}
+            <div className="flex flex-col flex-1 overflow-hidden">
+
+                {/* Header */}
+                <Header toggleSidebar={toggleSidebar} />
+
+                {/* Page content */}
+                <main className="flex-1 overflow-y-auto p-6">
+
+                    {/* Container giống SaaS layout */}
+                    <div className="w-full px-2">
+
+                        <Outlet />
+
+                    </div>
+
                 </main>
+
             </div>
+
         </div>
     );
 }

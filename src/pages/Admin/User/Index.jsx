@@ -1,33 +1,49 @@
-import React from 'react';
-import DataTable from '../../../components/Admin/DataTable';
+import React from "react";
+import DataTable from "../../../components/Admin/DataTable";
 
 export default function UserIndex() {
-    // Cấu hình cột
-    const userColumns = [
-        { header: 'ID', accessor: 'id' },
-        { header: 'Họ Tên', accessor: 'name' },
-        { header: 'Email', accessor: 'email' },
-        { header: 'Vai trò', accessor: 'role' },
-        { header: 'Trạng thái', accessor: 'status' },
+
+    const columns = [
+        { header: "ID", accessor: "id" },
+        { header: "Name", accessor: "name" },
+        { header: "Email", accessor: "email" },
+        { header: "Role", accessor: "role" },
+        { header: "Status", accessor: "status" },
     ];
 
-    // Dữ liệu giả định
-    const mockUsers = [
-        { id: 1, name: 'Nguyễn Văn A', email: 'a@example.com', role: 'Bệnh nhân', status: 'Hoạt động' },
-        { id: 2, name: 'Trần Thị B', email: 'b@example.com', role: 'Bác sĩ', status: 'Hoạt động' },
-        { id: 3, name: 'Lê Văn C', email: 'c@example.com', role: 'Bệnh nhân', status: 'Đã khóa' },
+    const users = [
+        { id: 1, name: "John Doe", email: "john@email.com", role: "User", status: "Active" },
+        { id: 2, name: "Anna Smith", email: "anna@email.com", role: "Doctor", status: "Active" },
+        { id: 3, name: "David Lee", email: "david@email.com", role: "User", status: "Locked" },
     ];
+
+    const handleDelete = (id) => {
+        console.log("delete user", id);
+    };
 
     return (
         <div>
+
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Quản lý Người dùng</h1>
-                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                    + Thêm User Mới
+
+                <h1 className="text-2xl font-bold text-gray-800">
+                    User Management
+                </h1>
+
+                <button className="bg-green-600 text-white px-4 py-2 rounded-lg">
+                    + Add User
                 </button>
+
             </div>
 
-            <DataTable title="Danh sách người dùng" columns={userColumns} data={mockUsers} />
+            <DataTable
+                title="User List"
+                columns={columns}
+                data={users}
+                basePath="/admin/users"
+                onDelete={handleDelete}
+            />
+
         </div>
     );
 }
