@@ -1,25 +1,66 @@
-import React from 'react';
-import DataTable from '../../../components/Admin/DataTable';
+import React from "react";
+import DataTable from "../../../components/Admin/DataTable";
 
 export default function MessageIndex() {
+
     const columns = [
-        { header: 'ID', accessor: 'id' },
-        { header: 'ID Hội thoại', accessor: 'conversationId' },
-        { header: 'Người gửi', accessor: 'sender' },
-        { header: 'Nội dung (Trích đoạn)', accessor: 'contentSnippet' },
-        { header: 'Thời gian', accessor: 'timestamp' },
+        { header: "Message ID", accessor: "id" },
+        { header: "Conversation ID", accessor: "conversationId" },
+        { header: "Sender", accessor: "sender" },
+        { header: "Content Preview", accessor: "contentSnippet" },
+        { header: "Timestamp", accessor: "timestamp" },
     ];
 
-    const mockMessages = [
-        { id: 'M101', conversationId: 'C001', sender: 'User', contentSnippet: 'Tôi bị đau đầu...', timestamp: '08:00 AM 15/10' },
-        { id: 'M102', conversationId: 'C001', sender: 'Bot', contentSnippet: 'Chào bạn, bạn có kèm...', timestamp: '08:01 AM 15/10' },
-        { id: 'M103', conversationId: 'C002', sender: 'User', contentSnippet: 'Thuốc này uống sao?', timestamp: '09:15 AM 15/10' },
+    const messages = [
+        {
+            id: "M101",
+            conversationId: "C001",
+            sender: "User",
+            contentSnippet: "I have a headache...",
+            timestamp: "08:00 AM 15 Oct",
+        },
+        {
+            id: "M102",
+            conversationId: "C001",
+            sender: "Bot",
+            contentSnippet: "Hello, do you also feel nausea...",
+            timestamp: "08:01 AM 15 Oct",
+        },
+        {
+            id: "M103",
+            conversationId: "C002",
+            sender: "User",
+            contentSnippet: "How should I take this medicine?",
+            timestamp: "09:15 AM 15 Oct",
+        },
     ];
+
+    const handleDelete = (id) => {
+        console.log("delete message", id);
+    };
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">Log Toàn bộ Tin nhắn</h1>
-            <DataTable title="Lịch sử hệ thống tin nhắn" columns={columns} data={mockMessages} />
+
+            {/* Page Header */}
+            <div className="flex justify-between items-center mb-6">
+
+                <h1 className="text-2xl font-bold text-gray-800">
+                    Message Logs
+                </h1>
+
+            </div>
+
+            {/* Table */}
+            <DataTable
+                title="System Message History"
+                columns={columns}
+                data={messages}
+                basePath="/admin/messages"
+                onDelete={handleDelete}
+                actions={["view", "delete"]}
+            />
+
         </div>
     );
 }
