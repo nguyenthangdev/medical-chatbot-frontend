@@ -2,14 +2,15 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
-import AdminLayout from './layouts/AdminLayout';
-import AuthLayout from './layouts/AuthLayout';
+import AdminLayout from './layouts/Admin/AdminLayout';
+import AuthLayout from './layouts/Admin/AuthLayout';
+import ClientLayout from './layouts/Client/ClientLayout'; // Thêm Layout Client
 
 // Auth Pages
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 
-// Admin Pages
+// Admin Pages (Đã có của bạn)
 import Dashboard from './pages/Admin/Dashboard/Index';
 import AccountDetail from './pages/Admin/Account/Detail';
 import AccountEdit from './pages/Admin/Account/Edit';
@@ -22,10 +23,20 @@ import MessageIndex from './pages/Admin/Message/Index';
 import MessageDetail from './pages/Admin/Message/Detail';
 import SettingIndex from './pages/Admin/Setting/Index';
 
+// Client Pages
+import ChatPage from './pages/Client/ChatPage'; 
+import SettingPage from './pages/Client/SettingPage'; // <--- Import SettingPage mới
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Client Routes (Medical Chatbot) */}
+        <Route path="/" element={<ClientLayout />}>
+          <Route index element={<ChatPage />} />
+          <Route path="settings" element={<SettingPage />} /> {/* <--- Khai báo Route */}
+        </Route>
+
         {/* Auth Routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
@@ -36,25 +47,25 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
-
+          
           <Route path="my-account" element={<AccountDetail />} />
           <Route path="my-account/edit" element={<AccountEdit />} />
-
+          
           <Route path="users" element={<UserIndex />} />
           <Route path="users/:id" element={<UserDetail />} />
           <Route path="users/:id/edit" element={<UserEdit />} />
-
+          
           <Route path="conversations" element={<ConversationIndex />} />
           <Route path="conversations/:id" element={<ConversationDetail />} />
-
+          
           <Route path="messages" element={<MessageIndex />} />
           <Route path="messages/:id" element={<MessageDetail />} />
-
+          
           <Route path="settings" element={<SettingIndex />} />
         </Route>
 
         {/* Default Route */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
