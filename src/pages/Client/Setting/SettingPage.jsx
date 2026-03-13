@@ -1,6 +1,6 @@
 // src/pages/Client/SettingPage.jsx
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const SettingPage = () => {
   const navigate = useNavigate();
@@ -74,9 +74,9 @@ const SettingPage = () => {
 
         {/* Khối 3: Đăng xuất */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <button className="w-full bg-red-100 text-red-600 hover:bg-red-200 font-bold py-4 rounded-xl text-xl flex items-center justify-center gap-2 transition-colors">
+          <Link to={'/login'} className="w-full bg-red-100 text-red-600 hover:bg-red-200 font-bold py-4 rounded-xl text-xl flex items-center justify-center gap-2 transition-colors">
             <span>🚪</span> Đăng xuất tài khoản
-          </button>
+          </Link>
         </div>
 
       </div>

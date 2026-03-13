@@ -10,7 +10,7 @@ export default function useAuth() {
         localStorage.removeItem("user");
 
         // redirect login
-        navigate("/login");
+        navigate("/admin/login");
     };
 
     const getUser = () => {

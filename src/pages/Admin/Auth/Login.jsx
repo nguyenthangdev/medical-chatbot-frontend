@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+
+// 1. Import hàm gọi API Login
+import { loginAdminAPI } from "../../../apis/Admin/auth.api";
 
 export default function Login() {
     const {
@@ -12,14 +15,48 @@ export default function Login() {
     } = useForm();
 
     const password = watch("password", "");
+    const navigate = useNavigate();
 
     const [showPassword, setShowPassword] = useState(false);
 
-    const onSubmit = (data) => {
-        console.log("Login data:", data);
+    // 2. Thêm states quản lý trạng thái gọi API
+    const [isLoading, setIsLoading] = useState(false);
+    const [apiError, setApiError] = useState("");
+    const [apiSuccess, setApiSuccess] = useState("");
+
+    // 3. Xử lý logic gọi API khi submit form
+    const onSubmit = async (data) => {
+        setIsLoading(true);
+        setApiError("");
+        setApiSuccess("");
+
+        try {
+            // Gọi API (Vì đã cấu hình withCredentials: true trong api, token sẽ tự động lưu vào cookie)
+            const response = await loginAdminAPI({
+                email: data.email,
+                password: data.password
+            });
+
+            // Nếu muốn lưu thêm thông tin user (tên, role) vào LocalStorage hoặc Redux/Context thì làm ở đây
+            // ví dụ: localStorage.setItem('adminInfo', JSON.stringify(response.accountAdmin));
+
+            setApiSuccess("🎉 Đăng nhập thành công! Đang chuyển hướng...");
+            
+            // Chuyển hướng vào trang Dashboard sau 1.5 giây
+            setTimeout(() => {
+                navigate("/admin/dashboard");
+            }, 1500);
+
+        } catch (error) {
+            // Hiển thị lỗi từ Backend (ví dụ: Sai mật khẩu, tài khoản bị khóa...)
+            const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi kết nối đến server!";
+            setApiError(errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    /* Password strength */
+    /* Password strength (Giữ nguyên logic của bạn) */
     const getStrength = () => {
         if (!password) return 0;
         if (password.length < 6) return 1;
@@ -58,10 +95,8 @@ export default function Login() {
 
                 {/* Header */}
                 <div className="flex flex-col items-center mb-6">
-
                     {/* Animated chatbot icon */}
                     <div className="w-16 h-16 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-md mb-3 animate-pulse">
-
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="w-8 h-8 text-green-600"
@@ -75,7 +110,6 @@ export default function Login() {
                 M12 2a10 10 0 00-7.07 17.07L3 22l2.93-1.93A10 10 0 1012 2z"
                             />
                         </svg>
-
                     </div>
 
                     <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
@@ -85,8 +119,19 @@ export default function Login() {
                     <p className="text-gray-600 dark:text-gray-400 text-sm">
                         Admin Login
                     </p>
-
                 </div>
+
+                {/* 4. KHU VỰC HIỂN THỊ THÔNG BÁO (LỖI HOẶC THÀNH CÔNG) */}
+                {apiError && (
+                    <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded shadow-sm text-sm text-center animate-bounce">
+                        ⚠️ {apiError}
+                    </div>
+                )}
+                {apiSuccess && (
+                    <div className="mb-4 p-3 bg-green-100 border-l-4 border-green-500 text-green-800 rounded shadow-sm text-sm text-center font-medium animate-pulse">
+                        {apiSuccess}
+                    </div>
+                )}
 
                 {/* Form */}
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -118,9 +163,7 @@ export default function Login() {
 
                     {/* Password */}
                     <div>
-
                         <div className="relative">
-
                             <input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Password"
@@ -150,7 +193,6 @@ export default function Login() {
                                     <EyeOff size={20} className="text-gray-300" />
                                 )}
                             </button>
-
                         </div>
 
                         {errors.password && (
@@ -158,16 +200,19 @@ export default function Login() {
                                 {errors.password.message}
                             </p>
                         )}
-
                     </div>
 
                     {/* Button */}
                     <button
                         type="submit"
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white
-            font-semibold py-2.5 rounded-lg shadow-md transition"
+                        disabled={isLoading || apiSuccess} // Khóa nút khi đang gửi hoặc đã thành công
+                        className={`w-full text-white font-semibold py-2.5 rounded-lg shadow-md transition ${
+                            isLoading || apiSuccess 
+                            ? 'bg-gray-400 cursor-not-allowed' 
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
                     >
-                        Login
+                        {isLoading ? 'Đang xử lý...' : apiSuccess ? 'Thành công!' : 'Login'}
                     </button>
 
                 </form>
@@ -176,8 +221,8 @@ export default function Login() {
                 <p className="text-center text-sm text-gray-700 dark:text-gray-400 mt-6">
                     Don't have an account?{" "}
                     <Link
-                        to="/register"
-                        className="text-blue-600 hover:underline"
+                        to="/admin/register"
+                        className="text-blue-600 hover:underline font-medium"
                     >
                         Register
                     </Link>
@@ -187,4 +232,3 @@ export default function Login() {
         </div>
     );
 }
-
