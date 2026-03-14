@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../../components/Client/Sidebar';
+import { useChat } from '../../hooks/useChat';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ClientLayout = () => {
   // State quản lý việc ẩn/hiện Sidebar trên Mobile
@@ -9,12 +11,19 @@ const ClientLayout = () => {
   const [fontSize, setFontSize] = useState(() => {
     return localStorage.getItem('chatFontSize') || 'medium';
   });
+  const { user } = useAuth()
+  console.log("user: ", user)
+  const { messages, loading, sendMessage, loadConversation, clearChat } = useChat(user?._id)
+
   return (
     <div className="flex h-screen w-full bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-100 overflow-hidden relative">
       
       {/* 1. SIDEBAR DESKTOP (Luôn hiện trên màn hình lớn, ẩn trên Mobile) */}
       <div className="hidden md:block z-10 shadow-lg">
-        <Sidebar />
+        <Sidebar 
+        onSelectConversation={(convId) => loadConversation(convId)}
+        onNewChat={() => clearChat()}
+        />
       </div>
 
       {/* 2. OVERLAY NỀN ĐEN MỜ (Dành cho Mobile khi mở menu) */}
@@ -51,7 +60,10 @@ const ClientLayout = () => {
           isMobileMenuOpen, 
           setIsMobileMenuOpen, 
           fontSize,          // <--- Truyền state xuống
-          setFontSize        // <--- Truyền hàm đổi state xuống
+          setFontSize,        // <--- Truyền hàm đổi state xuống
+          messages, 
+          loading, 
+          sendMessage
         }} />
       </main>
     </div>

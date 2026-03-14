@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { IoSendSharp } from "react-icons/io5";
 import { useOutletContext } from 'react-router-dom'; // 1. Import hook này
 
@@ -6,7 +6,13 @@ const ChatPage = () => {
   // State quản lý Model đang được chọn (Mặc định là GPT-4)
   const [selectedModel, setSelectedModel] = useState('gpt-4');
   // 1. Lấy thêm biến fontSize từ context
-  const { setIsMobileMenuOpen, fontSize } = useOutletContext();
+  const { setIsMobileMenuOpen, fontSize, messages, loading, sendMessage } = useOutletContext()
+
+  const messagesEndRef = useRef(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading]) // scroll khi có tin nhắn mới hoặc loading thay đổi
 
   // 2. Tạo một hàm nhỏ để dịch 'small', 'medium', 'large' thành class Tailwind
   const getTextSizeClass = () => {
@@ -15,35 +21,20 @@ const ChatPage = () => {
     return 'text-xl';                             // Cỡ vừa (mặc định của bạn)
   };
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      role: 'assistant',
-      content: 'Chào bác. Tôi là Bác sĩ Ảo. Bác đang cảm thấy trong người như thế nào? Cứ miêu tả chi tiết, hoặc gửi hình ảnh chụp đơn thuốc, vùng bị đau cho tôi xem nhé!'
-    }
-  ]);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   
   const fileInputRef = useRef(null);
 
-  const handleSend = (e) => {
+  // XÓA toàn bộ handleSend cũ, THAY bằng:
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!inputText.trim() && !selectedImage) return;
-    
-    setMessages([
-      ...messages, 
-      { 
-        id: Date.now(), 
-        role: 'user', 
-        content: inputText,
-        imageUrl: selectedImage ? URL.createObjectURL(selectedImage) : null 
-      }
-    ]);
-    
+
     setInputText('');
     setSelectedImage(null);
+    await sendMessage(inputText); // gọi hook
   };
 
   const handleVoiceClick = () => setIsRecording(!isRecording);
@@ -120,7 +111,7 @@ const ChatPage = () => {
 
       {/* Khu vực hiển thị tin nhắn (Thêm pt-20 để không bị thanh chọn model đè lên tin nhắn trên cùng) */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-24 space-y-6">
-        {messages.map((msg) => (
+        {(messages ?? []).map((msg) => (
           <div key={msg.id} className={`flex gap-4 max-w-4xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             
             <div className={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full text-white shadow-sm ${msg.role === 'assistant' ? 'bg-blue-500' : 'bg-gray-400'}`}>
@@ -146,6 +137,22 @@ const ChatPage = () => {
             </div>
           </div>
         ))}
+        {loading && (
+          <div className="flex gap-4 max-w-4xl mx-auto">
+            <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-500 text-white shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+              </svg>
+            </div>
+            <div className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm rounded-tl-none flex items-center gap-1">
+              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Khu vực nhập liệu */}
