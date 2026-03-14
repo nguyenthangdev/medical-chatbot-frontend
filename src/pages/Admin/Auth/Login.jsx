@@ -10,11 +10,9 @@ export default function Login() {
     const {
         register,
         handleSubmit,
-        watch,
         formState: { errors }
     } = useForm();
 
-    const password = watch("password", "");
     const navigate = useNavigate();
 
     const [showPassword, setShowPassword] = useState(false);
@@ -36,17 +34,16 @@ export default function Login() {
                 email: data.email,
                 password: data.password
             });
-
+            if (response.accountAdmin) {
+                setApiSuccess("🎉 Đăng nhập thành công! Đang chuyển hướng...");
+            
+                // Chuyển hướng vào trang Dashboard sau 1.5 giây
+                setTimeout(() => {
+                    navigate("/admin/dashboard");
+                }, 1500);
+            }
             // Nếu muốn lưu thêm thông tin user (tên, role) vào LocalStorage hoặc Redux/Context thì làm ở đây
             // ví dụ: localStorage.setItem('adminInfo', JSON.stringify(response.accountAdmin));
-
-            setApiSuccess("🎉 Đăng nhập thành công! Đang chuyển hướng...");
-            
-            // Chuyển hướng vào trang Dashboard sau 1.5 giây
-            setTimeout(() => {
-                navigate("/admin/dashboard");
-            }, 1500);
-
         } catch (error) {
             // Hiển thị lỗi từ Backend (ví dụ: Sai mật khẩu, tài khoản bị khóa...)
             const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi kết nối đến server!";
@@ -56,32 +53,6 @@ export default function Login() {
         }
     };
 
-    /* Password strength (Giữ nguyên logic của bạn) */
-    const getStrength = () => {
-        if (!password) return 0;
-        if (password.length < 6) return 1;
-        if (password.length < 8) return 2;
-        if (password.match(/[A-Z]/) && password.match(/[0-9]/)) return 4;
-        return 3;
-    };
-
-    const strength = getStrength();
-
-    const strengthColor = [
-        "bg-transparent",
-        "bg-red-500",
-        "bg-orange-400",
-        "bg-yellow-400",
-        "bg-green-500"
-    ];
-
-    const strengthText = [
-        "",
-        "Weak",
-        "Fair",
-        "Good",
-        "Strong"
-    ];
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center px-4 
