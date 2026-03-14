@@ -1,46 +1,44 @@
-// src/pages/Client/Auth/Register.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { registerClientAPI } from '../../../apis/Client/auth.api';
 
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ fullName: '', identifier: '', password: '' });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
-    // Validate dữ liệu
-    if (!formData.fullName.trim()) {
-      setError('Vui lòng nhập Họ và Tên của bác/cháu.');
-      return;
-    }
-    if (!formData.identifier.trim()) {
-      setError('Vui lòng nhập Số điện thoại hoặc Email để liên lạc.');
-      return;
-    }
-    if (!formData.password || formData.password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự để bảo mật ạ.');
-      return;
-    }
+    if (!formData.fullName.trim()) return setError('Vui lòng nhập Họ và Tên của bác/cháu.');
+    if (!formData.identifier.trim()) return setError('Vui lòng nhập Số điện thoại hoặc Email để liên lạc.');
+    if (!formData.password || formData.password.length < 6) return setError('Mật khẩu phải có ít nhất 6 ký tự để bảo mật ạ.');
 
-    // Nếu ok -> Chuyển về trang đăng nhập
-    navigate('/login');
+    setIsLoading(true);
+    try {
+      await registerClientAPI(formData);
+      setSuccess('🎉 Tạo tài khoản thành công! Đang chuyển hướng...');
+      setTimeout(() => navigate('/login'), 2000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="w-full">
       <h2 className="text-2xl font-bold text-blue-700 mb-6 text-center">Tạo Tài Khoản Mới</h2>
       
-      {/* Khung báo lỗi */}
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-xl font-medium">
-          ⚠️ {error}
-        </div>
-      )}
+      {error && <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-xl font-medium animate-pulse">⚠️ {error}</div>}
+      {success && <div className="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-r-xl font-medium animate-pulse">✓ {success}</div>}
 
       <form onSubmit={handleRegister} className="space-y-4">
+        {/* ... (Giữ nguyên các thẻ input của bạn) ... */}
         <div>
           <label className="block text-gray-700 font-medium mb-1 pl-2">Họ và tên</label>
           <input 
@@ -76,17 +74,15 @@ const Register = () => {
 
         <button 
           type="submit" 
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl py-4 rounded-2xl shadow-md transition-all mt-4"
+          disabled={isLoading || success}
+          className={`w-full text-white font-bold text-xl py-4 rounded-2xl shadow-md transition-all mt-4 ${isLoading || success ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
         >
-          Đăng Ký Tài Khoản
+          {isLoading ? 'Đang xử lý...' : success ? 'Thành công!' : 'Đăng Ký Tài Khoản'}
         </button>
       </form>
 
       <div className="mt-6 text-center text-gray-600 text-lg">
-        Đã có tài khoản?{' '}
-        <Link to="/login" className="text-blue-600 font-bold hover:underline">
-          Đăng nhập
-        </Link>
+        Đã có tài khoản? <Link to="/login" className="text-blue-600 font-bold hover:underline">Đăng nhập</Link>
       </div>
     </div>
   );

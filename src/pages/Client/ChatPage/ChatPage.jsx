@@ -5,7 +5,15 @@ import { useOutletContext } from 'react-router-dom'; // 1. Import hook này
 const ChatPage = () => {
   // State quản lý Model đang được chọn (Mặc định là GPT-4)
   const [selectedModel, setSelectedModel] = useState('gpt-4');
-  const { setIsMobileMenuOpen } = useOutletContext();
+  // 1. Lấy thêm biến fontSize từ context
+  const { setIsMobileMenuOpen, fontSize } = useOutletContext();
+
+  // 2. Tạo một hàm nhỏ để dịch 'small', 'medium', 'large' thành class Tailwind
+  const getTextSizeClass = () => {
+    if (fontSize === 'small') return 'text-base'; // Cỡ nhỏ
+    if (fontSize === 'large') return 'text-2xl';  // Cỡ to
+    return 'text-xl';                             // Cỡ vừa (mặc định của bạn)
+  };
 
   const [messages, setMessages] = useState([
     {
@@ -123,7 +131,7 @@ const ChatPage = () => {
               )}
             </div>
 
-            <div className={`p-4 rounded-2xl max-w-[85%] md:max-w-[75%] shadow-sm leading-relaxed text-xl
+            <div className={`p-4 rounded-2xl max-w-[85%] md:max-w-[75%] shadow-sm leading-relaxed ${getTextSizeClass()}
                 ${msg.role === 'assistant' ? 'bg-white text-gray-800 rounded-tl-none border border-gray-100' : 'bg-blue-600 text-white rounded-tr-none'}`}
             >
               {msg.imageUrl && (

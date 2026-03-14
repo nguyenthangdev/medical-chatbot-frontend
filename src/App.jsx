@@ -1,14 +1,9 @@
-// src/App.jsx
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-
-// ================= LAYOUTS =================
 import AdminLayout from './layouts/Admin/AdminLayout';
-import AuthLayout from './layouts/Admin/AuthLayout'; 
-import ClientLayout from './layouts/Client/ClientLayout'; 
+import AuthLayout from './layouts/Admin/AuthLayout';
+import ClientLayout from './layouts/Client/ClientLayout';
 import ClientAuthLayout from './layouts/Client/AuthLayout';
-
-// ================= ADMIN PAGES =================
 import Login from './pages/Admin/Auth/Login';
 import Register from './pages/Admin/Auth/Register';
 import Dashboard from './pages/Admin/Dashboard/Index';
@@ -25,23 +20,35 @@ import SettingIndex from './pages/Admin/Setting/Index';
 
 // ================= CLIENT PAGES =================
 import ChatPage from './pages/Client/ChatPage/ChatPage'
-import SettingPage from './pages/Client/Setting/SettingPage'; 
-import ClientLogin from './pages/Client/Auth/Login';       
-import ClientRegister from './pages/Client/Auth/Register'; 
+import SettingPage from './pages/Client/Setting/SettingPage';
+import ClientLogin from './pages/Client/Auth/Login';
+import ClientRegister from './pages/Client/Auth/Register';
 
 // 1. TẠO COMPONENT CON CHỨA ROUTES VÀ HOOKS
 function AppRoutes() {
-  const navigate = useNavigate(); // Lúc này gọi vô tư vì nó đã nằm trong BrowserRouter
+  const navigate = useNavigate();
 
-  // Lắng nghe sự kiện bắt buộc đăng xuất từ Axios Interceptor
+  // Lắng nghe sự kiện bắt buộc đăng xuất từ Axios Interceptor cho CẢ 2 BÊN
   useEffect(() => {
-    const handleForceLogout = () => {
-      // Có thể hiển thị thêm một toast message thông báo hết hạn phiên đăng nhập ở đây
+    // Xử lý khi Admin hết hạn token
+    const handleAdminForceLogout = () => {
       navigate('/admin/login');
     };
 
-    window.addEventListener('force-logout', handleForceLogout);
-    return () => window.removeEventListener('force-logout', handleForceLogout);
+    // Xử lý khi Client hết hạn token
+    const handleClientForceLogout = () => {
+      navigate('/login');
+    };
+
+    // Đăng ký lắng nghe
+    window.addEventListener('force-logout', handleAdminForceLogout);
+    window.addEventListener('client-force-logout', handleClientForceLogout);
+
+    // Dọn dẹp sự kiện khi component unmount
+    return () => {
+      window.removeEventListener('force-logout', handleAdminForceLogout);
+      window.removeEventListener('client-force-logout', handleClientForceLogout);
+    };
   }, [navigate]);
 
   return (
@@ -84,12 +91,11 @@ function AppRoutes() {
   );
 }
 
-// 2. COMPONENT APP CHÍNH CHỈ LÀM NHIỆM VỤ CUNG CẤP ROUTER BỌC BÊN NGOÀI
 function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+  <BrowserRouter>
+    <AppRoutes />
+  </BrowserRouter>
   );
 }
 

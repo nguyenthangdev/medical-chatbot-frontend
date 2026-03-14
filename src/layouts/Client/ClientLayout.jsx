@@ -5,7 +5,10 @@ import Sidebar from '../../components/Client/Sidebar';
 const ClientLayout = () => {
   // State quản lý việc ẩn/hiện Sidebar trên Mobile
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  // 1. Khởi tạo state cỡ chữ, lấy từ localStorage lên (mặc định là 'medium')
+  const [fontSize, setFontSize] = useState(() => {
+    return localStorage.getItem('chatFontSize') || 'medium';
+  });
   return (
     <div className="flex h-screen w-full bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-100 overflow-hidden relative">
       
@@ -44,7 +47,12 @@ const ClientLayout = () => {
       {/* Vùng nội dung chính */}
       <main className="flex-1 flex flex-col h-full relative">
         {/* Truyền hàm mở Menu xuống cho các trang con (ChatPage) */}
-        <Outlet context={{ setIsMobileMenuOpen }} /> 
+        <Outlet context={{ 
+          isMobileMenuOpen, 
+          setIsMobileMenuOpen, 
+          fontSize,          // <--- Truyền state xuống
+          setFontSize        // <--- Truyền hàm đổi state xuống
+        }} />
       </main>
     </div>
   );
