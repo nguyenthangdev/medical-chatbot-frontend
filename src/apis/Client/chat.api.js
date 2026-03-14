@@ -17,6 +17,14 @@ const chatApi = {
 
   deleteConversation: (conversationId) =>
     authorizedAxiosInstance.delete(`${API_ROOT}/chat/conversation/${conversationId}`),
+  
+  speechToText: (audioBlob) => {
+    const formData = new FormData()
+    formData.append('file', audioBlob, 'audio.webm')
+    return authorizedAxiosInstance.post(`${API_ROOT}/chat/stt`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  }
 }
 
 export default chatApi

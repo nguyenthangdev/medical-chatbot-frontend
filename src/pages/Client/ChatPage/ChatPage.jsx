@@ -1,13 +1,16 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useRef, useEffect } from 'react';
 import { IoSendSharp } from "react-icons/io5";
 import { useOutletContext } from 'react-router-dom'; // 1. Import hook này
+// Thêm import ở đầu file
+import chatApi from '../../../apis/Client/chat.api';
 
+// Hoặc nếu bạn gọi qua backend thì dùng chatApi
 const ChatPage = () => {
   // State quản lý Model đang được chọn (Mặc định là GPT-4)
   const [selectedModel, setSelectedModel] = useState('gpt-4');
   // 1. Lấy thêm biến fontSize từ context
   const { setIsMobileMenuOpen, fontSize, messages, loading, sendMessage } = useOutletContext()
-
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
@@ -23,6 +26,8 @@ const ChatPage = () => {
 
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef(null)       // ← thêm
+  const audioChunksRef = useRef([])           // ← thêm
   const [selectedImage, setSelectedImage] = useState(null);
   
   const fileInputRef = useRef(null);
@@ -37,7 +42,74 @@ const ChatPage = () => {
     await sendMessage(inputText); // gọi hook
   };
 
-  const handleVoiceClick = () => setIsRecording(!isRecording);
+  const handleVoiceClick = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop()
+      setIsRecording(false)
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (e) => {
+        audioChunksRef.current.push(e.data)
+      }
+
+      mediaRecorder.onstop = async () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+      stream.getTracks().forEach(t => t.stop())
+
+      try {
+        // Gọi STT (mock hoặc thật)
+        const res = await chatApi.speechToText(audioBlob)
+        const text = res.data.text
+
+        setInputText(text) // điền text vào input
+
+        // Tự động gửi luôn không cần bấm nút
+        await sendMessage(text)
+      } catch (err) {
+        alert('Lỗi nhận dạng giọng nói. Vui lòng thử lại.')
+      }
+    }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+    } catch (err) {
+      alert('Không thể truy cập microphone. Vui lòng cấp quyền.')
+    }
+  }
+//   const handleVoiceClick = () => {
+//   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+//   if (!SpeechRecognition) {
+//     alert('Trình duyệt không hỗ trợ nhận dạng giọng nói')
+//     return
+//   }
+
+//   const recognition = new SpeechRecognition()
+//   recognition.lang = 'vi-VN' // tiếng Việt
+//   recognition.interimResults = false
+
+//   recognition.onstart = () => setIsRecording(true)
+//   recognition.onend = () => setIsRecording(false)
+
+//   recognition.onresult = async (e) => {
+//     const text = e.results[0][0].transcript
+//     await sendMessage(text) // gửi luôn
+//   }
+
+//   recognition.onerror = (e) => {
+//     setIsRecording(false)
+//     console.log('Speech error:', e.error) // ← xem log này
+//     alert('Lỗi nhận dạng. Thử lại nhé.')
+//   }
+
+//   recognition.start()
+// }
   const handlePlusClick = () => fileInputRef.current.click();
 
   const handleFileChange = (e) => {
