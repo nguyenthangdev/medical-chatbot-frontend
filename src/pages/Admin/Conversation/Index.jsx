@@ -1,47 +1,51 @@
-import React from "react";
+import React, { useEffect } from "react";
 import DataTable from "../../../components/Admin/DataTable";
+import { useAdminChat } from "../../../hooks/Admin/useAdminChat";
 
 export default function ConversationIndex() {
+    const {
+        conversations,
+        loading,
+        error,
+        fetchConversations,
+        deleteConversationItem
+    } = useAdminChat();
+
+    useEffect(() => {
+        fetchConversations();
+    }, [fetchConversations]);
 
     const columns = [
-        { header: "ID", accessor: "id" },
-        { header: "User", accessor: "user" },
-        { header: "Topic", accessor: "topic" },
-        { header: "Last Updated", accessor: "lastUpdated" },
-        { header: "Status", accessor: "status" },
+        { header: "ID", accessor: "_id" },
+        { header: "User ID", accessor: "userId" },
+        { header: "Title", accessor: "title" },
+        { header: "Model", accessor: "model" },
+        { header: "Last Updated", accessor: "updatedAt" },
     ];
 
-    const conversations = [
-        {
-            id: "C001",
-            user: "Nguyen Van A",
-            topic: "Fever symptoms consultation",
-            lastUpdated: "10 minutes ago",
-            status: "Active",
-        },
-        {
-            id: "C002",
-            user: "Tran Thi B",
-            topic: "Stomach medicine advice",
-            lastUpdated: "1 hour ago",
-            status: "Closed",
-        },
-    ];
-
-    const handleDelete = (id) => {
-        console.log("delete conversation", id);
+    const handleDelete = async (id) => {
+        if (window.confirm("Bạn chắc chắn muốn xóa cuộc hội thoại này?")) {
+            await deleteConversationItem(id);
+        }
     };
+
+    if (error) {
+        return (
+            <div className="text-red-600 p-4">
+                Error: {error}
+            </div>
+        );
+    }
 
     return (
         <div>
-
             <div className="flex justify-between items-center mb-6">
-
                 <h1 className="text-2xl font-bold text-gray-800">
                     Conversation Management
                 </h1>
-
             </div>
+
+            {loading && <div className="text-blue-600 p-4">Đang tải...</div>}
 
             <DataTable
                 title="Conversation List"
@@ -51,7 +55,6 @@ export default function ConversationIndex() {
                 onDelete={handleDelete}
                 actions={["view", "delete"]}
             />
-
         </div>
     );
 }
