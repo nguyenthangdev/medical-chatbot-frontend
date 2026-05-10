@@ -5,7 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 
 import { registerAdminAPI } from "../../../apis/Admin/auth.api";
 
-export default function Register() {
+export default function AdminRegister() {
     const {
         register,
         handleSubmit,

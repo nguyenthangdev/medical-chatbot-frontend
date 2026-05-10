@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../../components/Client/Sidebar';
-import { useChat } from '../../hooks/useChat';
-import { useAuth } from '../../contexts/AuthContext';
+import { useChat } from '../../hooks/Client/useChat';
+import { useAuth } from '../../contexts/Client/ClientAuthContext';
 
 const ClientLayout = () => {
-  // State quản lý việc ẩn/hiện Sidebar trên Mobile
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  // 1. Khởi tạo state cỡ chữ, lấy từ localStorage lên (mặc định là 'medium')
   const [fontSize, setFontSize] = useState(() => {
     return localStorage.getItem('chatFontSize') || 'medium';
   });
   const { user } = useAuth()
-  console.log("user: ", user)
   const { messages, loading, sendMessage, loadConversation, clearChat } = useChat(user?._id)
 
   return (

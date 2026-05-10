@@ -1,14 +1,12 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useRef, useEffect } from 'react';
 import { IoSendSharp } from "react-icons/io5";
-import { useOutletContext } from 'react-router-dom'; // 1. Import hook này
-// Thêm import ở đầu file
-import chatApi from '../../../apis/Client/chat.api';
+import { useOutletContext } from 'react-router-dom';
+import { speechToText } from '../../../apis/Client/chat.api';
 
-// Hoặc nếu bạn gọi qua backend thì dùng chatApi
 const ChatPage = () => {
-  // State quản lý Model đang được chọn (Mặc định là GPT-4)
-  const [selectedModel, setSelectedModel] = useState('gpt-4');
+  // State quản lý Model đang được chọn (Mặc định là Qwen)
+  const [selectedModel, setSelectedModel] = useState('qwen');
   // 1. Lấy thêm biến fontSize từ context
   const { setIsMobileMenuOpen, fontSize, messages, loading, sendMessage } = useOutletContext()
   const messagesEndRef = useRef(null)
@@ -65,7 +63,7 @@ const ChatPage = () => {
 
       try {
         // Gọi STT (mock hoặc thật)
-        const res = await chatApi.speechToText(audioBlob)
+        const res = await speechToText(audioBlob)
         const text = res.data.text
 
         setInputText(text) // điền text vào input
@@ -149,14 +147,14 @@ const ChatPage = () => {
       <div className="absolute top-[76px] md:top-4 left-0 w-full flex justify-center z-10 px-4 md:px-0">
         <div className="w-full max-w-[340px] md:max-w-max bg-white/90 backdrop-blur-md p-1 md:p-1.5 rounded-full shadow-sm border border-blue-100/50 flex gap-1 justify-between md:justify-center">
           <button
-            onClick={() => setSelectedModel('gpt-4')}
+            onClick={() => setSelectedModel('qwen')}
             className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 md:py-2 rounded-full text-[15px] md:text-lg font-medium transition-all duration-300 ${
-              selectedModel === 'gpt-4' 
+              selectedModel === 'qwen' 
                 ? 'bg-blue-600 text-white shadow-md' 
                 : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
             }`}
           >
-            GPT-4
+            Qwen
           </button>
           <button
             onClick={() => setSelectedModel('gemini')}

@@ -1,30 +1,37 @@
-// front-end/src/apis/chatApi.js
 import authorizedAxiosInstance from '../../utils/authorizedAxiosClient';
 import { API_ROOT } from '../../utils/constants';
 
-const chatApi = {
-  createConversation: (userId, model = 'qwen-7b') =>
-    authorizedAxiosInstance.post(`${API_ROOT}/chat/conversation`, { userId, model }),
-
-  sendMessage: (conversationId, message, model = 'qwen-7b') =>
-    authorizedAxiosInstance.post(`${API_ROOT}/chat/message`, { conversationId, message, model }),
-
-  getConversations: (userId) =>
-    authorizedAxiosInstance.get(`${API_ROOT}/chat/conversations/${userId}`),
-
-  getMessages: (conversationId) =>
-    authorizedAxiosInstance.get(`${API_ROOT}/chat/messages/${conversationId}`),
-
-  deleteConversation: (conversationId) =>
-    authorizedAxiosInstance.delete(`${API_ROOT}/chat/conversation/${conversationId}`),
-  
-  speechToText: (audioBlob) => {
-    const formData = new FormData()
-    formData.append('file', audioBlob, 'audio.webm')
-    return authorizedAxiosInstance.post(`${API_ROOT}/chat/stt`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-  }
+export const createConversation = async (userId, model = 'qwen-7b') => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/conversation`, { userId, model });
+  return response.data;
 }
 
-export default chatApi
+export const sendMessages = async (conversationId, message, model = 'qwen-7b') => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/message`, { conversationId, message, model });
+  return response.data;
+}
+
+export const getConversations = async (userId) => {
+  const response = await authorizedAxiosInstance.get(`${API_ROOT}/api/v1/chat/conversations/${userId}`);
+  return response.data;
+}
+
+export const getMessages = async (conversationId) => {
+  const response = await authorizedAxiosInstance.get(`${API_ROOT}/api/v1/chat/messages/${conversationId}`);
+  return response.data;
+}
+
+export const deleteConversation = async (conversationId) => {
+  const response = await authorizedAxiosInstance.delete(`${API_ROOT}/api/v1/chat/conversation/${conversationId}`);
+  return response.data;
+}
+
+export const speechToText = async (audioBlob) => {
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'audio.webm');
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/stt`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+}
+

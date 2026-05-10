@@ -9,7 +9,7 @@ export default function MessageDetail() {
         id: id,
         conversationId: "C001",
         sender: "Bot",
-        model: "GPT-4 / Gemini",
+        model: "Qwen / Gemini",
         timestamp: "08:01 AM • 15 Oct 2023",
         content:
             "Hello, do you also feel nausea or fever? Headaches can be caused by many factors including stress, dehydration, or illness.",

@@ -25,7 +25,7 @@ export default function SettingIndex() {
                                 AI Model
                             </label>
                             <select className="w-full border rounded-lg p-2 bg-white">
-                                <option>GPT-4</option>
+                                <option>Qwen</option>
                                 <option>Gemini</option>
                                 <option>Claude</option>
                             </select>

@@ -8,20 +8,21 @@ import {
     Settings,
     User,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    ShieldUser
 } from "lucide-react";
-
 export default function Sidebar({ open, collapsed, toggleCollapse }) {
 
     const location = useLocation();
 
     const menu = [
-        { name: "Dashboard", path: "/admin/dashboard", icon: <LayoutDashboard size={20} /> },
-        { name: "Users", path: "/admin/users", icon: <Users size={20} /> },
-        { name: "Conversations", path: "/admin/conversations", icon: <MessageCircle size={20} /> },
-        { name: "Messages", path: "/admin/messages", icon: <Mail size={20} /> },
-        { name: "Settings", path: "/admin/settings", icon: <Settings size={20} /> },
-        { name: "My Account", path: "/admin/my-account", icon: <User size={20} /> }
+        { name: "Tổng quan", path: "/admin/dashboard", icon: <LayoutDashboard size={20} /> },
+        { name: "Người dùng", path: "/admin/users", icon: <Users size={20} /> },
+        { name: "Tài khoản", path: "/admin/accounts", icon: <ShieldUser size={20} /> },
+        { name: "Cuộc trò chuyện", path: "/admin/conversations", icon: <MessageCircle size={20} /> },
+        { name: "Tin nhắn", path: "/admin/messages", icon: <Mail size={20} /> },
+        { name: "Cài đặt", path: "/admin/settings", icon: <Settings size={20} /> },
+        { name: "Thông tin cá nhân", path: "/admin/my-profile", icon: <User size={20} /> }
     ];
 
     return (

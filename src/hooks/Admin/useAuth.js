@@ -1,6 +1,6 @@
 // src/hooks/useAuth.js
 import { useNavigate } from "react-router-dom";
-import { fetchLogoutAPI } from "../apis/Admin/auth.api";
+import { fetchLogoutAPI } from "../../apis/Admin/auth.api";
 
 export default function useAuth() {
     const navigate = useNavigate();

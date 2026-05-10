@@ -1,129 +1,93 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-
-// Import hàm gọi API lấy thông tin tài khoản
-// (Bạn nhớ kiểm tra lại đường dẫn import cho khớp với thư mục của bạn nhé)
-import { fetchMyAccountAPI } from "../../../apis/Admin/myAccount.api";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { getAccountByIdAPI } from "../../../apis/Admin/account.api";
 
 export default function AccountDetail() {
-    // State lưu trữ dữ liệu tài khoản
-    const [profile, setProfile] = useState(null);
-    // State quản lý trạng thái loading
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [account, setAccount] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchAccountDetails = async () => {
+        const fetchDetail = async () => {
             try {
-                // Gọi API (Axios Interceptor sẽ tự động đính kèm Cookie chứa token)
-                const res = await fetchMyAccountAPI();
-                
-                // Tùy thuộc vào cấu trúc Backend trả về, bạn gán cho đúng nhé
-                // Giả sử Backend trả về: { message: "...", accountAdmin: { fullName, email, ... } }
-                setProfile(res.accountAdmin || res.data || res);
+                const res = await getAccountByIdAPI(id);
+                setAccount(res.account);
             } catch (error) {
-                console.error("Lỗi khi lấy thông tin tài khoản:", error);
+                toast.error("Không thể tải thông tin tài khoản!");
+                navigate('/admin/accounts'); // Lỗi thì đá về danh sách
             } finally {
-                setIsLoading(false); // Tắt loading dù thành công hay thất bại
+                setIsLoading(false);
             }
         };
+        fetchDetail();
+    }, [id, navigate]);
 
-        fetchAccountDetails();
-    }, []);
-
-    // Giao diện khi đang tải dữ liệu
-    if (isLoading) {
-        return (
-            <div className="max-w-2xl bg-white shadow-md rounded-xl p-8 flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            </div>
-        );
-    }
-
-    // Giao diện khi không lấy được dữ liệu (hoặc bị lỗi)
-    if (!profile) {
-        return (
-            <div className="max-w-2xl bg-white shadow-md rounded-xl p-8 text-center text-red-500">
-                Không thể tải thông tin tài khoản. Vui lòng thử lại sau.
-            </div>
-        );
-    }
-
-    // Lấy chữ cái đầu tiên của tên làm Avatar mặc định
-    const avatarLetter = (profile.fullName || profile.name || "A").charAt(0).toUpperCase();
+    if (isLoading) return <div className="p-6">Đang tải dữ liệu...</div>;
+    if (!account) return null;
 
     return (
-        <div className="max-w-2xl bg-white shadow-md rounded-xl p-6 text-gray-800 transition-all duration-300">
-
+        <div className="max-w-3xl bg-white shadow-sm rounded-xl border border-gray-100 p-6 text-gray-800 transition-all duration-300">
             {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold">
-                    Account Information
-                </h2>
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate('/admin/accounts')} className="text-gray-500 hover:text-blue-600 font-medium">
+                        &larr; Back
+                    </button>
+                    <h2 className="text-2xl font-bold">Chi tiết tài khoản</h2>
+                </div>
+                
                 <Link
-                    to="/admin/my-account/edit"
-                    className="bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition text-white"
+                    to={`/admin/accounts/${account._id}/edit`}
+                    className="bg-blue-600 px-5 py-2 rounded-lg hover:bg-blue-700 transition text-white font-medium"
                 >
-                    Edit Profile
+                    Chỉnh sửa
                 </Link>
             </div>
 
-            {/* Profile Overview */}
-            <div className="flex items-center gap-4 mb-6">
-                {/* Avatar */}
-                <div className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
-                    {profile.avatar ? (
-                        <img src={profile.avatar} alt="Avatar" className="w-full h-full rounded-full object-cover" />
-                    ) : (
-                        avatarLetter
-                    )}
+            {/* Khối Profile */}
+            <div className="flex items-center gap-5 mb-8">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-2xl shadow-md">
+                    {account.fullName?.charAt(0).toUpperCase()}
                 </div>
-
                 <div>
-                    <div className="font-semibold text-xl">
-                        {profile.fullName || profile.name}
-                    </div>
-                    <span className="inline-block mt-1 px-3 py-1 text-xs rounded-full bg-purple-100 text-purple-700 font-medium">
-                        {/* Nếu backend có trả về tên role thì hiển thị, không thì để mặc định */}
-                        {profile.roleName || profile.role?.title || "Admin"}
+                    <div className="font-bold text-xl">{account.fullName}</div>
+                    <div className="text-gray-500">{account.email}</div>
+                </div>
+            </div>
+
+            {/* Thông tin chi tiết */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 text-sm">
+                <div>
+                    <div className="text-gray-400 mb-1 text-xs uppercase tracking-wider font-semibold">Vai trò (Role)</div>
+                    <span className="px-3 py-1 text-xs rounded-full bg-purple-100 text-purple-700 font-bold">
+                        {account.role}
                     </span>
                 </div>
-            </div>
 
-            <hr className="mb-6 border-gray-100" />
-
-            {/* Info Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 text-sm">
-                
                 <div>
-                    <div className="text-gray-500 mb-1 text-xs uppercase tracking-wider font-semibold">Full Name</div>
-                    <div className="font-medium text-gray-900">{profile.fullName || profile.name}</div>
+                    <div className="text-gray-400 mb-1 text-xs uppercase tracking-wider font-semibold">Trạng thái</div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${account.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {account.status === 'active' ? 'Hoạt động' : 'Đã khóa'}
+                    </span>
                 </div>
 
                 <div>
-                    <div className="text-gray-500 mb-1 text-xs uppercase tracking-wider font-semibold">Email</div>
-                    <div className="font-medium text-gray-900">{profile.email}</div>
-                </div>
-
-                <div>
-                    <div className="text-gray-500 mb-1 text-xs uppercase tracking-wider font-semibold">Status</div>
-                    <div>
-                        <span className={`px-2 py-1 text-xs rounded font-medium ${profile.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {profile.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
-                        </span>
-                    </div>
-                </div>
-
-                <div>
-                    <div className="text-gray-500 mb-1 text-xs uppercase tracking-wider font-semibold">Joined Date</div>
+                    <div className="text-gray-400 mb-1 text-xs uppercase tracking-wider font-semibold">Ngày tạo</div>
                     <div className="font-medium text-gray-900">
-                        {profile.createdAt 
-                            ? new Date(profile.createdAt).toLocaleDateString('vi-VN') 
-                            : "N/A"}
+                        {new Date(account.createdAt).toLocaleString('vi-VN')}
                     </div>
                 </div>
 
+                <div>
+                    <div className="text-gray-400 mb-1 text-xs uppercase tracking-wider font-semibold">Cập nhật lần cuối</div>
+                    <div className="font-medium text-gray-900">
+                        {new Date(account.updatedAt).toLocaleString('vi-VN')}
+                    </div>
+                </div>
             </div>
-
         </div>
     );
 }

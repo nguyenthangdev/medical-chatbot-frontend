@@ -1,16 +1,14 @@
-import React from 'react';
-
 export default function Dashboard() {
     const stats = [
-        { title: 'Tổng User', value: '1,245', color: 'bg-blue-500' },
-        { title: 'Bác sĩ trực tuyến', value: '42', color: 'bg-green-500' },
-        { title: 'Đoạn chat hôm nay', value: '8,401', color: 'bg-purple-500' },
-        { title: 'Cảnh báo y tế', value: '3', color: 'bg-red-500' },
+        { title: 'Total Users', value: '1,245', color: 'bg-blue-500' },
+        { title: 'Online Doctors', value: '42', color: 'bg-green-500' },
+        { title: 'Today\'s Chats', value: '8,401', color: 'bg-purple-500' },
+        { title: 'Health Alerts', value: '3', color: 'bg-red-500' },
     ];
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">Tổng quan hệ thống</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">System Overview</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, index) => (

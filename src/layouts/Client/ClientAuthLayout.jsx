@@ -1,8 +1,6 @@
-// src/layouts/Client/AuthLayout.jsx
-import React from 'react';
 import { Outlet } from 'react-router-dom';
 
-const AuthLayout = () => {
+const ClientAuthLayout = () => {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-100 p-4">
       <div className="w-full max-w-md bg-white rounded-[32px] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] p-8 md:p-10 border border-white">
@@ -26,4 +24,4 @@ const AuthLayout = () => {
   );
 };
 
-export default AuthLayout;
+export default ClientAuthLayout;

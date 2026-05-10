@@ -1,87 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify'; // Đừng quên import toast để hiển thị thông báo nhé
-import { fetchLogoutAPI } from '../../../apis/Client/auth.api';
-import { getMyAccountAPI, updateMyAccountAPI } from '../../../apis/Client/myAccount.api'; // Thêm API update
+import { toast } from 'react-toastify'; 
+import { updateMyProfileAPI } from '../../../apis/Client/myProfile.api';
+import { useAuth } from '../../../contexts/Client/ClientAuthContext.jsx';
 
 const SettingPage = () => {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
-  // State lưu thông tin người dùng
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { refreshUser, user, isLoading, logout } = useAuth();
 
-  // State quản lý việc cập nhật
+
   const [fullName, setFullName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // State quản lý size chữ (UI demo)
   const { fontSize, setFontSize } = useOutletContext();
-  
-  // 1. GỌI API LẤY THÔNG TIN
+
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const res = await getMyAccountAPI();
-        setUser(res.user);
-        setFullName(res.user.fullName); // Đổ dữ liệu vào state để edit
-      } catch (error) {
-        console.error("Lỗi khi tải thông tin cá nhân:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (user?.fullName) {
+      setFullName(user.fullName);
+    }
+  }, [user]);
 
-    fetchUserData();
-  }, []);
-
-  // 2. HÀM CẬP NHẬT THÔNG TIN
   const handleUpdateProfile = async () => {
     if (!fullName.trim()) {
       toast.error("Vui lòng nhập họ và tên của bạn!");
       return;
     }
 
-    // Nếu tên không đổi thì không gọi API cho đỡ tốn tài nguyên
     if (fullName === user.fullName) {
       toast.info("Thông tin không có gì thay đổi!");
       return;
     }
-
     setIsSaving(true);
     try {
-      const res = await updateMyAccountAPI({ fullName });
-      setUser(res.user); // Cập nhật lại state user với data mới nhất
+      await updateMyProfileAPI({ fullName });
+      await refreshUser(); 
       toast.success("Lưu thông tin thành công!");
     } catch (error) {
       console.error("Lỗi cập nhật:", error);
-      // Lỗi thì Axios Interceptor đã tự toast rồi, không cần bắt ở đây nữa, hoặc có thể custom thêm
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Hàm xử lý khi bấm đổi cỡ chữ
   const handleChangeFontSize = (size) => {
-    setFontSize(size); // Đổi trên giao diện ngay lập tức
-    localStorage.setItem('chatFontSize', size); // Lưu vào bộ nhớ máy để F5 không mất
+    setFontSize(size); 
+    localStorage.setItem('chatFontSize', size); 
   };
 
-  // 3. HÀM ĐĂNG XUẤT (Nhớ giữ lại vụ xóa cờ nha)
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    try {
-      await fetchLogoutAPI(); // Gọi BE để xóa HTTP-Only Cookie
-      localStorage.removeItem('isClientLogged'); // Xóa cờ báo hiệu đã login
-    } catch (error) {
-      console.error("Lỗi đăng xuất:", error);
-    } finally {
-      navigate('/login'); // Dù lỗi hay không cũng cho ra ngoài
-    }
+    await logout()
   };
 
-  // Màn hình loading khi đang lấy dữ liệu
   if (isLoading) {
     return (
       <div className="flex flex-col h-full items-center justify-center bg-gray-50">
@@ -156,19 +127,19 @@ const SettingPage = () => {
             <p className="text-gray-600 font-medium">Kích thước chữ trong đoạn chat</p>
             <div className="flex gap-4">
               <button 
-                onClick={() => handleChangeFontSize('small')} // Gọi hàm mới
+                onClick={() => handleChangeFontSize('small')}
                 className={`flex-1 py-3 border-2 rounded-xl text-lg transition-colors ${fontSize === 'small' ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold' : 'border-gray-200 hover:border-blue-300'}`}
               >
                 Nhỏ
               </button>
               <button 
-                onClick={() => handleChangeFontSize('medium')} // Gọi hàm mới
+                onClick={() => handleChangeFontSize('medium')}
                 className={`flex-1 py-3 border-2 rounded-xl text-lg transition-colors ${fontSize === 'medium' ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold' : 'border-gray-200 hover:border-blue-300'}`}
               >
                 Vừa
               </button>
               <button 
-                onClick={() => handleChangeFontSize('large')} // Gọi hàm mới
+                onClick={() => handleChangeFontSize('large')}
                 className={`flex-1 py-3 border-2 rounded-xl text-xl transition-colors ${fontSize === 'large' ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold' : 'border-gray-200 hover:border-blue-300'}`}
               >
                 To

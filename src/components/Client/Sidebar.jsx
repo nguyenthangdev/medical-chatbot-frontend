@@ -1,38 +1,22 @@
-// src/components/Client/Sidebar.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getMyAccountAPI } from '../../apis/Client/myAccount.api';
-import chatApi from '../../apis/Client/chat.api';
-
-// Nhận thêm 2 props từ layout: onSelectConversation, onNewChat
+import { getConversations } from '../../apis/Client/chat.api';
+import { useAuth } from '../../contexts/Client/ClientAuthContext.jsx';
 const Sidebar = ({ onSelectConversation, onNewChat }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [user, setUser] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [activeId, setActiveId] = useState(null);
-
-  // Lấy thông tin user
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await getMyAccountAPI();
-        setUser(res.user);
-      } catch (error) {
-        console.error('Lỗi tải thông tin user ở Sidebar:', error);
-      }
-    };
-    fetchUser();
-  }, []);
+  const { user } = useAuth();
 
   // Lấy danh sách conversations
   useEffect(() => {
     const fetchConversations = async () => {
       if (!user?._id) return;
       try {
-        const res = await chatApi.getConversations(user._id);
+        const res = await getConversations(user._id);
         setConversations(res.data);
       } catch (error) {
         console.error('Lỗi tải conversations:', error);
@@ -41,12 +25,10 @@ const Sidebar = ({ onSelectConversation, onNewChat }) => {
     fetchConversations();
   }, [user]);
 
-  // Lọc theo search
-  const filtered = conversations.filter((c) =>
+  const filtered = conversations?.filter((c) =>
     c.title?.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  // Nhóm conversations theo ngày
   const groupByDate = (list) => {
     const today = new Date();
     const yesterday = new Date(today);
@@ -54,7 +36,7 @@ const Sidebar = ({ onSelectConversation, onNewChat }) => {
 
     const groups = { 'Hôm nay': [], 'Hôm qua': [], 'Trước đó': [] };
 
-    list.forEach((c) => {
+    list?.forEach((c) => {
       const d = new Date(c.updatedAt);
       if (d.toDateString() === today.toDateString()) {
         groups['Hôm nay'].push(c);
@@ -72,12 +54,12 @@ const Sidebar = ({ onSelectConversation, onNewChat }) => {
 
   const handleSelectConversation = (conv) => {
     setActiveId(conv._id);
-    onSelectConversation?.(conv._id); // gọi lên ChatPage để load messages
+    onSelectConversation?.(conv._id);
   };
 
   const handleNewChat = () => {
     setActiveId(null);
-    onNewChat?.(); // gọi lên ChatPage để clearChat
+    onNewChat?.();
     navigate('/');
   };
 
@@ -107,7 +89,7 @@ const Sidebar = ({ onSelectConversation, onNewChat }) => {
 
       {/* Danh sách conversations */}
       <div className="mt-6 flex-1 overflow-y-auto pr-2">
-        {conversations.length === 0 ? (
+        {!conversations || conversations.length === 0 ? (
           <p className="text-gray-400 text-sm text-center mt-8">Chưa có lịch sử khám</p>
         ) : (
           Object.entries(grouped).map(([label, items]) =>

@@ -1,150 +1,143 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify"; // Đảm bảo bạn đã cài và setup react-toastify
-
-// Import 2 API
-import { updateMyAccountAPI, fetchMyAccountAPI } from "../../../apis/Admin/myAccount.api";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { getAccountByIdAPI, updateAccountAPI } from "../../../apis/Admin/account.api";
 
 export default function AccountEdit() {
+    const { id } = useParams();
     const navigate = useNavigate();
-
-    // Lấy thêm hàm 'reset' từ useForm để chủ động nạp dữ liệu vào form
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
-    const [isLoading, setIsLoading] = useState(true); // Loading khi kéo data
-    const [isSaving, setIsSaving] = useState(false);  // Loading khi bấm Save
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
-    // 1. GỌI API ĐỂ ĐỔ DỮ LIỆU CŨ VÀO FORM
+    // 1. KÉO DỮ LIỆU CŨ VÀO FORM
     useEffect(() => {
-        const fetchAccountDetails = async () => {
+        const fetchAccount = async () => {
             try {
-                const res = await fetchMyAccountAPI();
-                const profile = res.accountAdmin || res.data || res;
-                
-                // Nạp dữ liệu lấy được vào Form
+                const res = await getAccountByIdAPI(id);
+                // Reset form bằng dữ liệu thật
                 reset({
-                    name: profile.fullName || profile.name,
-                    email: profile.email,
+                    fullName: res.account.fullName,
+                    email: res.account.email,
+                    role: res.account.role,
+                    status: res.account.status
                 });
             } catch (error) {
-                console.error("Lỗi lấy thông tin:", error);
-                toast.error("Không thể tải thông tin tài khoản!");
+                toast.error("Lỗi khi tải dữ liệu tài khoản!");
+                navigate('/admin/accounts');
             } finally {
                 setIsLoading(false);
             }
         };
+        fetchAccount();
+    }, [id, reset, navigate]);
 
-        fetchAccountDetails();
-    }, [reset]);
-
-    // 2. GỌI API KHI BẤM NÚT SAVE
+    // 2. LƯU DỮ LIỆU MỚI
     const onSubmit = async (data) => {
         setIsSaving(true);
         try {
-            // Map dữ liệu form (name) sang field Backend cần (fullName)
+            // Chỉ gửi lên những trường cần update (bỏ email đi vì không cho sửa)
             const payload = {
-                fullName: data.name
+                fullName: data.fullName,
+                role: data.role,
+                status: data.status
             };
-
-            await updateMyAccountAPI(payload);
-            toast.success("Cập nhật thông tin thành công!");
             
-            // Cập nhật xong thì quay về trang Detail
-            navigate("/admin/my-account");
+            await updateAccountAPI(id, payload);
+            toast.success("Cập nhật tài khoản thành công!");
+            navigate(`/admin/accounts/${id}`); // Xong thì về trang detail
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Lỗi khi cập nhật thông tin!";
-            toast.error(errorMessage);
+            toast.error("Lỗi khi cập nhật tài khoản!");
         } finally {
             setIsSaving(false);
         }
     };
 
-    // Giao diện Loading chờ lấy dữ liệu
-    if (isLoading) {
-        return (
-            <div className="max-w-2xl bg-white shadow-md rounded-xl p-8 flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            </div>
-        );
-    }
+    if (isLoading) return <div className="p-6">Đang tải dữ liệu form...</div>;
 
     return (
-        <div className="max-w-2xl bg-white shadow-md rounded-xl p-6 text-gray-800 transition-all duration-300">
-
+        <div className="max-w-2xl bg-white shadow-sm rounded-xl border border-gray-100 p-6 text-gray-800">
             {/* Header */}
             <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="text-gray-500 hover:text-blue-600 transition flex items-center gap-1 font-medium"
-                >
+                <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-blue-600 font-medium cursor-pointer">
                     &larr; Back
                 </button>
-                <h2 className="text-2xl font-semibold">
-                    Edit Account
-                </h2>
+                <h2 className="text-2xl font-bold">Chỉnh sửa tài khoản</h2>
             </div>
 
             {/* Form */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
+                
                 {/* Full Name */}
                 <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Full Name <span className="text-red-500">*</span>
-                    </label>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700">Họ và tên <span className="text-red-500">*</span></label>
                     <input
                         type="text"
-                        {...register("name", { required: "Vui lòng nhập họ tên" })}
-                        className="w-full px-4 py-2.5 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                        placeholder="Nhập họ và tên..."
+                        {...register("fullName", { required: "Vui lòng nhập họ tên" })}
+                        className="w-full px-4 py-2.5 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
                     />
-                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+                    {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>}
                 </div>
 
                 {/* Email (Readonly) */}
                 <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Email
-                    </label>
+                    <label className="block text-sm font-semibold mb-2 text-gray-700">Email</label>
                     <input
                         type="email"
                         {...register("email")}
                         readOnly
-                        className="w-full px-4 py-2.5 border rounded-lg border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed select-none"
+                        className="w-full px-4 py-2.5 border rounded-lg border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed"
                     />
-                    <p className="text-xs text-orange-500 mt-1.5 flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                        </svg>
-                        Email cannot be changed for security reasons.
-                    </p>
+                    <p className="text-xs text-gray-400 mt-1">Email là cố định, không thể thay đổi.</p>
+                </div>
+
+                {/* Role & Status */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-semibold mb-2 text-gray-700">Vai trò</label>
+                        <select
+                            {...register("role")}
+                            className="w-full px-4 py-2.5 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                        >
+                            <option value="Admin">Admin</option>
+                            <option value="Staff">Staff</option>
+                            <option value="Super Admin">Super Admin</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold mb-2 text-gray-700">Trạng thái</label>
+                        <select
+                            {...register("status")}
+                            className="w-full px-4 py-2.5 border rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                        >
+                            <option value="active">Hoạt động (Active)</option>
+                            <option value="inactive">Khóa (Inactive)</option>
+                        </select>
+                    </div>
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-4 pt-6 mt-2">
+                <div className="flex gap-3 pt-6">
                     <button
                         type="submit"
                         disabled={isSaving}
-                        className={`px-6 py-2.5 rounded-lg text-white font-medium transition ${
-                            isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 shadow-sm'
-                        }`}
+                        className={`px-6 py-2.5 rounded-lg text-white font-medium transition ${isSaving ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'}`}
                     >
-                        {isSaving ? 'Saving...' : 'Save Changes'}
+                        {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
                     </button>
-
                     <button
                         type="button"
                         onClick={() => navigate(-1)}
-                        disabled={isSaving}
                         className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition"
                     >
-                        Cancel
+                        Hủy
                     </button>
                 </div>
-
             </form>
-
         </div>
     );
 }

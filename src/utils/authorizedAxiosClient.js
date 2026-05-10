@@ -1,6 +1,5 @@
-// src/utils/authorizedAxiosClient.js
 import axios from 'axios';
-import { fetchLogoutAPI, refreshTokenAPI } from '../apis/Client/auth.api'; // Nhớ import đúng đường dẫn
+import { fetchLogoutAPI, refreshTokenAPI } from '../apis/Client/auth.api'; 
 import { toast } from 'react-toastify';
 
 const authorizedAxiosInstance = axios.create();
@@ -19,11 +18,9 @@ let refreshTokenPromise = null;
 authorizedAxiosInstance.interceptors.response.use((response) => {
   return response;
 }, async (error) => {
-  // 401: Token sai hoặc không có
   if (error.response?.status === 401) {
     await fetchLogoutAPI().catch(() => {}); 
 
-    // Bắn event báo cho App biết để đá văng ra /login
     const event = new CustomEvent('client-force-logout');
     window.dispatchEvent(event);
     return Promise.reject(error);
@@ -31,7 +28,6 @@ authorizedAxiosInstance.interceptors.response.use((response) => {
 
   const originalRequest = error.config;
 
-  // 410: Token hết hạn, cần làm mới
   if (error.response?.status === 410 && originalRequest) {
     if (originalRequest._retry) {
       await fetchLogoutAPI().catch(() => {}); 
@@ -61,7 +57,6 @@ authorizedAxiosInstance.interceptors.response.use((response) => {
     });
   }
 
-  // Báo lỗi bằng Toast
   if (error.response?.status !== 410) {
     toast.error(error.response?.data?.message || error?.message);
   }

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useState, useCallback, useRef } from 'react'
-import chatApi from '../apis/Client/chat.api'
+import { createConversation, sendMessages, getMessages } from '../../apis/Client/chat.api'
 
 export const useChat = (userId) => {
   const [messages, setMessages] = useState([])
@@ -20,11 +20,11 @@ export const useChat = (userId) => {
 
     try {
       if (!conversationIdRef.current) {
-        const res = await chatApi.createConversation(userId)
+        const res = await createConversation(userId)
         conversationIdRef.current = res.data.conversationId
       }
 
-      const res = await chatApi.sendMessage(conversationIdRef.current, message)
+      const res = await sendMessages(conversationIdRef.current, message)
 
       setMessages((prev) => [
         ...prev,
@@ -45,7 +45,7 @@ export const useChat = (userId) => {
   const loadConversation = useCallback(async (conversationId) => {
     try {
       conversationIdRef.current = conversationId
-      const res = await chatApi.getMessages(conversationId)
+      const res = await getMessages(conversationId)
       setMessages(res.data)
       setError(null)
     } catch (err) {
