@@ -21,7 +21,7 @@ export const useChat = (userId) => {
     try {
       if (!conversationIdRef.current) {
         const res = await createConversation(userId)
-        conversationIdRef.current = res.data.conversationId
+        conversationIdRef.current = res.conversationId
       }
 
       const res = await sendMessages(conversationIdRef.current, message)
@@ -30,8 +30,8 @@ export const useChat = (userId) => {
         ...prev,
         {
           role: 'assistant',
-          content: res.data.response,
-          model: res.data.model_used,
+          content: res.response,
+          model: res.model_used,
           createdAt: new Date(),
         },
       ])
@@ -46,7 +46,7 @@ export const useChat = (userId) => {
     try {
       conversationIdRef.current = conversationId
       const res = await getMessages(conversationId)
-      setMessages(res.data)
+      setMessages(res)
       setError(null)
     } catch (err) {
       setError('Không thể tải lịch sử chat.')
