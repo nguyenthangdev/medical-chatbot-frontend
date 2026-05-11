@@ -72,7 +72,7 @@ export default function UserIndex() {
         <div className="relative">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">
-                    Quản lý Bệnh nhân / Khách hàng
+                    Quản lý Người dùng
                 </h1>
             </div>
 

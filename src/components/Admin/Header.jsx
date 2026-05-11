@@ -30,7 +30,7 @@ export default function Header({ toggleSidebar }) {
                     <Menu size={24} />
                 </button>
                 <h1 className="hidden md:block text-lg font-semibold text-gray-800">
-                    AdminPage
+                    Trang quản trị
                 </h1>
             </div>
 
