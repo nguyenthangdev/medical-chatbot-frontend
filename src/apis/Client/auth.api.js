@@ -12,7 +12,7 @@ export const loginClientAPI = async (data) => {
 };
 
 export const refreshTokenAPI = async () => {
-  const response = await axios.post(`${API_ROOT}/api/v1/refresh-token`, { withCredentials: true });
+  const response = await axios.post(`${API_ROOT}/api/v1/refresh-token`, {}, { withCredentials: true });
   return response.data;
 };
 

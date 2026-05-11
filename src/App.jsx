@@ -31,7 +31,7 @@ import AccountCreate from './pages/Admin/Account/Create';
 import UserEdit from './pages/Admin/User/Edit';
 import { AdminProviders } from './AppProviders';
 import UnauthorizedRoutesAdmin from './components/Admin/UnauthorizedRoutes';
-import PrivateRouteAdmin from './components/Admin/PrivateRoute ';
+import PrivateRouteAdmin from './components/Admin/PrivateRoute';
 import Error404Page from './pages/404/Error404Page';
 
 function App() {

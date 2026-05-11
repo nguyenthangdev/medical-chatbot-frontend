@@ -2,28 +2,28 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getConversations } from '../../apis/Client/chat.api';
 import { useAuth } from '../../contexts/Client/ClientAuthContext.jsx';
-const Sidebar = ({ onSelectConversation, onNewChat }) => {
+
+// Bổ sung thêm prop currentConversationId
+const Sidebar = ({ currentConversationId, onSelectConversation, onNewChat, refreshTrigger }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [conversations, setConversations] = useState([]);
   const [searchText, setSearchText] = useState('');
-  const [activeId, setActiveId] = useState(null);
   const { user } = useAuth();
 
-  // Lấy danh sách conversations
   useEffect(() => {
     const fetchConversations = async () => {
       if (!user?._id) return;
       try {
         const res = await getConversations(user._id);
-        setConversations(res.data);
+        setConversations(res);
       } catch (error) {
         console.error('Lỗi tải conversations:', error);
       }
     };
     fetchConversations();
-  }, [user]);
+  }, [user, refreshTrigger]);
 
   const filtered = conversations?.filter((c) =>
     c.title?.toLowerCase().includes(searchText.toLowerCase())
@@ -53,12 +53,12 @@ const Sidebar = ({ onSelectConversation, onNewChat }) => {
   const grouped = groupByDate(filtered);
 
   const handleSelectConversation = (conv) => {
-    setActiveId(conv._id);
+    // Không cần set local state nữa, gọi thẳng hàm của Cha
     onSelectConversation?.(conv._id);
   };
 
   const handleNewChat = () => {
-    setActiveId(null);
+    // Không cần set local state nữa
     onNewChat?.();
     navigate('/');
   };
@@ -103,13 +103,14 @@ const Sidebar = ({ onSelectConversation, onNewChat }) => {
                     <button
                       key={conv._id}
                       onClick={() => handleSelectConversation(conv)}
+                      // Đổi activeId thành currentConversationId để check css
                       className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-colors group ${
-                        activeId === conv._id
+                        currentConversationId === conv._id
                           ? 'bg-blue-50 border border-blue-100'
                           : 'hover:bg-gray-100'
                       }`}
                     >
-                      <span className={`group-hover:text-blue-500 ${activeId === conv._id ? 'text-blue-500' : 'text-gray-400'}`}>
+                      <span className={`group-hover:text-blue-500 ${currentConversationId === conv._id ? 'text-blue-500' : 'text-gray-400'}`}>
                         💬
                       </span>
                       <span className="truncate text-[15px] font-medium text-gray-700">
