@@ -112,7 +112,7 @@ export default function MessageDetail() {
                         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                             <div className="text-xs text-gray-500 mb-1">Độ tự tin (Confidence)</div>
                             <div className="font-semibold text-gray-800">
-                                {message.confidence ? `${(message.confidence * 100).toFixed(1)}%` : 'N/A'}
+                                {message.confidence ? message.confidence : 'N/A'}
                             </div>
                         </div>
 
@@ -138,7 +138,7 @@ export default function MessageDetail() {
                     {/* Sources */}
                     {message.sources && message.sources.length > 0 && (
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <h4 className="text-sm font-bold text-gray-700 mb-2">Nguồn tham khảo (Sources):</h4>
+                            <h4 className="text-sm font-bold text-gray-700 mb-2">Một số thông tin liên quan:</h4>
                             <ul className="list-decimal list-inside text-sm text-gray-600 space-y-1">
                                 {message.sources.map((src, i) => (
                                     <li key={i}>{typeof src === 'object' ? src.title || src.name : src}</li>
@@ -164,10 +164,11 @@ export default function MessageDetail() {
                 <div className="mt-6 pt-6 border-t border-gray-100">
                     <h3 className="font-semibold text-gray-600 mb-3 text-sm">Phân tích Token & Latency</h3>
                     <div className="flex gap-4">
-                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Prompt: {message.tokens.promptTokens || 0}</span>
-                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Completion: {message.tokens.completionTokens || 0}</span>
-                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Tổng: {message.tokens.totalTokens || 0}</span>
-                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Độ trễ: {message.latency || message.tokens.latency || 'N/A'}</span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Số token gửi đi: {message.tokens.prompt_tokens || 0}</span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Số token trả về: {message.tokens.completion_tokens || 0}</span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Tổng token sử dụng: {message.tokens.total_tokens || 0}</span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Tổng token đã sử dụng ở phiên hiện tại: {message.tokens.token_remaining || 0}</span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">Độ trễ: {message.latency || message.tokens.latency || 'N/A'} ms</span>
                     </div>
                 </div>
             )}

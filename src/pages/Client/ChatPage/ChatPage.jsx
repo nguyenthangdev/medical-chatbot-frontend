@@ -162,7 +162,7 @@ const ChatPage = () => {
                   {msg.sources && msg.sources.length > 0 && (
                      <div className="pt-3 border-t border-gray-100 mt-2">
                         <div className="flex items-center gap-1 text-xs font-semibold text-gray-500 mb-1">
-                           <Info size={14} /> Nguồn tham khảo:
+                           <Info size={14} /> Một số thông tin liên quan:
                         </div>
                         <ul className="text-xs text-gray-400 list-disc list-inside">
                            {msg.sources.map((source, idx) => (

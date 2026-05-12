@@ -2,11 +2,11 @@ import authorizedAxiosInstance from '../../utils/authorizedAxiosAdmin';
 
 import { API_ROOT } from '../../utils/constants';
 
-// // Lấy danh sách messages của 1 conversation
-// export const getMessagesByConversation = async (conversationId) => {
-//   const response = await authorizedAxiosInstance.get(`${API_ROOT}/api/admin/v1/messages/conversation/${conversationId}`)
-//   return response.data
-// }
+// Lấy danh sách messages của 1 conversation
+export const getMessagesByConversation = async (conversationId) => {
+  const response = await authorizedAxiosInstance.get(`${API_ROOT}/api/admin/v1/messages/conversation/${conversationId}`)
+  return response.data
+}
 
 // Tạo tin nhắn mới
 export const createMessage = async (data) => {
