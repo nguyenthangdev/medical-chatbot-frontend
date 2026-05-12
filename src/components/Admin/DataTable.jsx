@@ -29,11 +29,21 @@ export default function DataTable({
                             <tr key={row._id || row.id} className="border-b hover:bg-gray-50 transition">
                                 {columns.map((col, index) => (
                                     <td key={index} className="py-3 px-4">
-                                        {col.accessor === 'status' ? (
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${row[col.accessor] === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                {row[col.accessor] === 'active' ? 'Hoạt động' : 'Đã khóa'}
-                                            </span>
-                                        ) : typeof row[col.accessor] === 'object' ? JSON.stringify(row[col.accessor]) : row[col.accessor]}
+                                        {col.render ? (
+                                        col.render(row)
+                                    ) : col.accessor === 'status' ? (
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                            row[col.accessor] === 'active' 
+                                                ? 'bg-green-100 text-green-700' 
+                                                : 'bg-red-100 text-red-700'
+                                        }`}>
+                                            {row[col.accessor] === 'active' ? 'Hoạt động' : 'Đã khóa'}
+                                        </span>
+                                    ) : typeof row[col.accessor] === 'object' ? (
+                                        JSON.stringify(row[col.accessor])
+                                    ) : (
+                                        row[col.accessor]
+                                    )}
                                     </td>
                                 ))}
                                 <td className="py-3 px-4 text-center">

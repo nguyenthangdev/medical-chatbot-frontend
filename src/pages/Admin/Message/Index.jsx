@@ -36,7 +36,7 @@ export default function MessageIndex() {
         { 
             header: "Nội dung", 
             accessor: "content",
-            render: (row) => <div className="truncate max-w-[300px]">{row.content}</div> 
+            render: (row) => <div className="truncate w-[300px]">{row.content}</div> 
         },
         { 
             header: "Thời gian", 
