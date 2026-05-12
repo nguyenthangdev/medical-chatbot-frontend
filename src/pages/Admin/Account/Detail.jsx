@@ -34,7 +34,7 @@ export default function AccountDetail() {
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
                 <div className="flex items-center gap-4">
                     <button onClick={() => navigate('/admin/accounts')} className="text-gray-500 hover:text-blue-600 font-medium">
-                        &larr; Back
+                        &larr; Quay lại
                     </button>
                     <h2 className="text-2xl font-bold">Chi tiết tài khoản</h2>
                 </div>

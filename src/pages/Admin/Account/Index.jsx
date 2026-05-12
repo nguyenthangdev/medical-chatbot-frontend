@@ -1,30 +1,61 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import DataTable from '../../../components/Admin/DataTable';
+import Pagination from '../../../components/Admin/Pagination';
 import { getAccountsAPI, deleteAccountAPI } from '../../../apis/Admin/account.api';
 
 export default function AccountIndex() {
   const [accounts, setAccounts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [pagination, setPagination] = useState(null);
+  const [searchInput, setSearchInput] = useState("");
+  
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Đọc parameters từ URL
+  const page = parseInt(searchParams.get("page")) || 1;
+  const limit = parseInt(searchParams.get("limit")) || 10;
+  const keyword = searchParams.get("keyword") || "";
 
   // STATE QUẢN LÝ POPUP XÓA
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, accountId: null });
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
+  // Cột cho DataTable
+  const columns = [
+    { header: "Họ và tên", accessor: "fullName" },
+    { header: "Email", accessor: "email" },
+    { header: "Vai trò", accessor: "role" },
+    { header: "Trạng thái", accessor: "status" },
+  ];
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
-      const res = await getAccountsAPI();
+      const params = { page, limit, keyword };
+      const res = await getAccountsAPI(params);
+      
       setAccounts(res.accounts || []);
+      setPagination(res.pagination);
+      if (res.keyword) setSearchInput(res.keyword);
     } catch (error) {
       toast.error('Lỗi khi tải danh sách tài khoản');
-    } finally {
-      setIsLoading(false);
     }
+  }, [page, limit, keyword]);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
+
+  // Hàm update URL Params
+  const updateParams = (newParams) => {
+    const currentParams = Object.fromEntries([...searchParams]);
+    setSearchParams({ ...currentParams, ...newParams });
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    updateParams({ keyword: searchInput, page: 1 });
   };
 
   // CÁC HÀM XỬ LÝ POPUP
@@ -36,93 +67,82 @@ export default function AccountIndex() {
     try {
       await deleteAccountAPI(deleteModal.accountId);
       toast.success("Xóa tài khoản thành công!");
-      fetchAccounts(); 
+      
+      // Nếu xóa item cuối cùng của trang, lùi lại 1 trang
+      if (accounts.length === 1 && page > 1) {
+        updateParams({ page: page - 1 });
+      } else {
+        fetchAccounts(); 
+      }
       closeDeleteModal(); 
     } catch (error) {
+      toast.error(error.response?.data?.message || "Xóa thất bại!");
       closeDeleteModal();
     } finally {
       setIsDeleting(false);
     }
   };
 
-  if (isLoading) return <div className="p-4 md:p-6">Đang tải dữ liệu...</div>;
-
   return (
-    // Responsive: p-4 trên mobile, p-6 trên màn hình lớn
-    <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100 relative">
-      
-      {/* Responsive Header: flex-col trên mobile, flex-row trên màn hình lớn */}
+    <div className="relative">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800">Quản lý Quản trị viên</h2>
         <Link 
           to="/admin/accounts/create" 
-          // Responsive Button: w-full trên mobile, auto trên màn hình lớn
           className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 sm:py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 shadow-sm"
         >
           <span className="text-lg leading-none">+</span> Thêm tài khoản
         </Link>
       </div>
 
-      {/* Responsive Table: Tràn viền (-mx-4) trên mobile cho dễ vuốt ngang */}
-      <div className="overflow-x-auto -mx-4 md:mx-0">
-        <div className="inline-block min-w-full align-middle">
-          <table className="min-w-full text-left border-collapse">
-            <thead>
-              {/* Thêm whitespace-nowrap để chữ không bị rớt dòng làm xấu bảng */}
-              <tr className="bg-gray-50 border-y md:border-t-0 border-gray-200 text-gray-500 uppercase text-xs whitespace-nowrap">
-                <th className="p-4 font-semibold">Họ và tên</th>
-                <th className="p-4 font-semibold">Email</th>
-                <th className="p-4 font-semibold">Vai trò</th>
-                <th className="p-4 font-semibold">Trạng thái</th>
-                <th className="p-4 font-semibold text-center">Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {accounts.map((acc) => (
-                // Thêm whitespace-nowrap
-                <tr key={acc._id} className="border-b border-gray-100 hover:bg-gray-50 transition whitespace-nowrap">
-                  <td className="p-4 font-medium text-gray-800">{acc.fullName}</td>
-                  <td className="p-4 text-gray-600">{acc.email}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${acc.role === 'Super Admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-purple-100 text-purple-700'}`}>
-                      {acc.role || 'Admin'}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${acc.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {acc.status === 'active' ? 'Hoạt động' : 'Đã khóa'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <Link to={`/admin/accounts/${acc._id}`} className="text-blue-500 hover:text-blue-700 hover:underline mr-4 font-medium">Xem</Link>
-                    <Link to={`/admin/accounts/${acc._id}/edit`} className="text-blue-500 hover:text-blue-700 hover:underline mr-4 font-medium">Sửa</Link>
-                    <button 
-                      onClick={() => openDeleteModal(acc._id)} 
-                      className="text-red-500 hover:text-red-700 hover:underline font-medium"
-                    >
-                      Xóa
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {accounts.length === 0 && (
-                <tr><td colSpan="5" className="text-center p-8 text-gray-500">Chưa có tài khoản nào trong hệ thống.</td></tr>
-              )}
-            </tbody>
-          </table>
+      {/* Khối Search (Chuyển ra ngoài DataTable cho đồng bộ) */}
+      <div className="bg-white shadow rounded-lg p-6 text-gray-800 mb-4 border border-gray-100">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-3">
+          <form onSubmit={handleSearchSubmit} className="flex gap-2 w-full md:w-auto">
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, email..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 w-full md:w-80"
+            />
+            <button 
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex-shrink-0"
+            >
+              Tìm kiếm
+            </button>
+          </form>
         </div>
       </div>
 
-      {/* MODAL XÁC NHẬN XÓA */}
+      {/* Khối Bảng dữ liệu & Phân trang */}
+      <div className="bg-white shadow rounded-lg p-6 border border-gray-100">
+        <DataTable
+            columns={columns}
+            data={accounts}
+            basePath="/admin/accounts"
+            onDelete={openDeleteModal} 
+        />
+
+        <Pagination
+            pagination={pagination}
+            items={accounts}
+            handlePagination={(pageIndex) => updateParams({ page: pageIndex })}
+            handlePaginationPrevious={(pageIndex) => updateParams({ page: pageIndex - 1 })}
+            handlePaginationNext={(pageIndex) => updateParams({ page: pageIndex + 1 })}
+        />
+      </div>
+
+      {/* MODAL XÁC NHẬN XÓA (Giữ nguyên cấu trúc UI cũ) */}
       {deleteModal.isOpen && (
-        // p-4 ở đây giúp modal không chạm sát viền trên màn hình điện thoại
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div 
             className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
             onClick={closeDeleteModal}
           ></div>
 
-          {/* w-full max-w-sm: Chiếm full màn hình điện thoại, nhưng lên máy tính thì tối đa 384px */}
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative z-10 transform transition-all animate-fade-in-up">
             <div className="flex flex-col items-center text-center">
               
@@ -137,7 +157,6 @@ export default function AccountIndex() {
                 Bạn có chắc chắn muốn xóa tài khoản này không? Hành động này <span className="font-semibold text-gray-700">không thể hoàn tác</span>.
               </p>
               
-              {/* flex-row đảm bảo 2 nút luôn nằm ngang, dù trên điện thoại nhỏ */}
               <div className="flex flex-row w-full gap-3">
                 <button 
                   onClick={closeDeleteModal}

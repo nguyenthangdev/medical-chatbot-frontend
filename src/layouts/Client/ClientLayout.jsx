@@ -13,7 +13,14 @@ const ClientLayout = () => {
   const [refreshSidebar, setRefreshSidebar] = useState(0);
 
   // 2. TRUYỀN HÀM TĂNG BIẾN TRIGGER VÀO useChat
-  const { messages, loading, conversationId, sendMessage, loadConversation, clearChat } = useChat(
+  const { 
+    messages, 
+    loading, 
+    conversationId, 
+    sendMessage, 
+    loadConversation, 
+    clearChat 
+  } = useChat(
     user?._id, 
     () => setRefreshSidebar(prev => prev + 1) // Mỗi lần chat xong, biến này sẽ thay đổi
   );

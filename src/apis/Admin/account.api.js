@@ -1,8 +1,13 @@
 import authorizedAxiosInstance from '../../utils/authorizedAxiosAdmin';
 import { API_ROOT } from '../../utils/constants';
 
-export const getAccountsAPI = async () => {
-  const response = await authorizedAxiosInstance.get(`${API_ROOT}/api/admin/v1/accounts`);
+export const getAccountsAPI = async (params = {}) => {
+  const queryParams = new URLSearchParams();
+  if (params.page) queryParams.set('page', params.page.toString());
+  if (params.limit) queryParams.set('limit', params.limit.toString());
+  if (params.keyword) queryParams.set('keyword', params.keyword);
+
+  const response = await authorizedAxiosInstance.get(`${API_ROOT}/api/admin/v1/accounts?${queryParams.toString()}`);
   return response.data;
 };
 

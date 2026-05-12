@@ -43,7 +43,7 @@ const ClientRegister = () => {
             placeholder="Ví dụ: Nguyễn Văn A"
             className={inputClass(errors.fullName)}
             {...register('fullName', {
-              required: 'Bác/cháu vui lòng nhập Họ và Tên.',
+              required: 'Vui lòng nhập Họ và Tên.',
               minLength: { value: 2, message: 'Họ và tên phải có ít nhất 2 ký tự.' },
             })}
           />
@@ -60,11 +60,11 @@ const ClientRegister = () => {
             placeholder="0909... hoặc example@email.com"
             className={inputClass(errors.identifier)}
             {...register('identifier', {
-              required: 'Bác/cháu vui lòng nhập Số điện thoại hoặc Email.',
+              required: 'Vui lòng nhập Số điện thoại hoặc Email.',
               validate: (value) => {
                 const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
                 const isPhone = /^(0|\+84)[0-9]{9}$/.test(value);
-                return isEmail || isPhone || 'Bác/cháu vui lòng nhập đúng định dạng Email hoặc Số điện thoại.';
+                return isEmail || isPhone || 'Vui lòng nhập đúng định dạng Email hoặc Số điện thoại.';
               },
             })}
           />
@@ -81,7 +81,7 @@ const ClientRegister = () => {
             placeholder="Tạo mật khẩu dễ nhớ..."
             className={inputClass(errors.password)}
             {...register('password', {
-              required: 'Bác/cháu vui lòng nhập mật khẩu.',
+              required: 'Vui lòng nhập mật khẩu.',
               minLength: { value: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự.' },
             })}
           />

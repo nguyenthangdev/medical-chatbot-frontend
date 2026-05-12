@@ -48,7 +48,7 @@ const ClientLogin = () => {
             placeholder="Nhập email hoặc số điện thoại..."
             className={inputClass(errors.identifier)}
             {...register('identifier', {
-              required: 'Bác/cháu vui lòng nhập Email hoặc Số điện thoại ạ.',
+              required: 'Vui lòng nhập Email hoặc Số điện thoại.',
               validate: (value) => {
                 const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
                 const isPhone = /^(0|\+84)[0-9]{9}$/.test(value);
@@ -69,7 +69,7 @@ const ClientLogin = () => {
             placeholder="Nhập mật khẩu..."
             className={inputClass(errors.password)}
             {...register('password', {
-              required: 'Bác/cháu chưa nhập mật khẩu.',
+              required: 'Vui lòng nhập mật khẩu.',
               minLength: { value: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự.' },
             })}
           />

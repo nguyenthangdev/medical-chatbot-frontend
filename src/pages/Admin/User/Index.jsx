@@ -1,21 +1,22 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom"; // BỔ SUNG HOOK NÀY
+import { useSearchParams } from "react-router-dom"; 
 import { toast } from "react-toastify";
 import DataTable from "../../../components/Admin/DataTable";
+import Pagination from "../../../components/Admin/Pagination"; // Component phân trang vừa tạo
 import { getUsersAPI, deleteUserAPI } from "../../../apis/Admin/user.api";
 
 export default function UserIndex() {
     const [users, setUsers] = useState([]);
+    const [pagination, setPagination] = useState(null);
+    const [searchInput, setSearchInput] = useState("");
     
     const [searchParams, setSearchParams] = useSearchParams();
     
+    // Đọc parameters hiện tại từ URL
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const keyword = searchParams.get("keyword") || "";
-
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
 
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null });
     const [isDeleting, setIsDeleting] = useState(false);
@@ -29,10 +30,13 @@ export default function UserIndex() {
 
     const fetchUsers = useCallback(async () => {
         try {
-            const res = await getUsersAPI(`?page=${page}&limit=${limit}&keyword=${keyword}`);
-            setUsers(res.data.users);
-            setTotalPages(res.data.totalPages);
-            setTotalItems(res.data.totalItems);
+            const params = { page, limit, keyword };
+            const res = await getUsersAPI(params);
+            
+            setUsers(res.users);
+            setPagination(res.pagination);
+            // Cập nhật lại thanh search nếu người dùng F5 bằng link có sẵn keyword
+            if(res.keyword) setSearchInput(res.keyword);
         } catch (error) {
             toast.error("Lỗi tải danh sách người dùng!");
         }
@@ -42,12 +46,15 @@ export default function UserIndex() {
         fetchUsers();
     }, [fetchUsers]);
 
-    const handleSearch = (searchVal) => {
-        setSearchParams({ page: 1, limit, keyword: searchVal });
+    // Thay đổi parameter trên URL để kích hoạt effect
+    const updateParams = (newParams) => {
+        const currentParams = Object.fromEntries([...searchParams]);
+        setSearchParams({ ...currentParams, ...newParams });
     };
 
-    const handlePageChange = (newPage) => {
-        setSearchParams({ page: newPage, limit, keyword });
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        updateParams({ keyword: searchInput, page: 1 });
     };
 
     const openDeleteModal = (id) => setDeleteModal({ isOpen: true, userId: id });
@@ -76,21 +83,43 @@ export default function UserIndex() {
                 </h1>
             </div>
 
-            <DataTable
-                title="Danh sách Người dùng"
-                columns={columns}
-                data={users}
-                basePath="/admin/users"
-                onDelete={openDeleteModal} 
-                
-                keyword={keyword}
-                onSearch={handleSearch}
-                
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-                totalItems={totalItems}
-            />
+            {/* Khối Search ngoài DataTable */}
+            <div className="bg-white shadow rounded-lg p-6 text-gray-800 mb-4">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-3">
+                    <form onSubmit={handleSearchSubmit} className="flex gap-2 w-full md:w-auto">
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm theo tên, email..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="border rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 w-full md:w-80"
+                        />
+                        <button 
+                            type="submit"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex-shrink-0"
+                        >
+                            Tìm kiếm
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div className="bg-white shadow rounded-lg p-6">
+                <DataTable
+                    columns={columns}
+                    data={users}
+                    basePath="/admin/users"
+                    onDelete={openDeleteModal} 
+                />
+
+                <Pagination
+                    pagination={pagination}
+                    items={users}
+                    handlePagination={(pageIndex) => updateParams({ page: pageIndex })}
+                    handlePaginationPrevious={(pageIndex) => updateParams({ page: pageIndex - 1 })}
+                    handlePaginationNext={(pageIndex) => updateParams({ page: pageIndex + 1 })}
+                />
+            </div>
 
             {deleteModal.isOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">

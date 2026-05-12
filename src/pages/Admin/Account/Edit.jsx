@@ -63,7 +63,7 @@ export default function AccountEdit() {
             {/* Header */}
             <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
                 <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-blue-600 font-medium cursor-pointer">
-                    &larr; Back
+                    &larr; Quay lại
                 </button>
                 <h2 className="text-2xl font-bold">Chỉnh sửa tài khoản</h2>
             </div>

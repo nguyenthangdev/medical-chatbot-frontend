@@ -8,7 +8,7 @@ export default function Dashboard() {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">System Overview</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">Tổng quan hệ thống</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, index) => (

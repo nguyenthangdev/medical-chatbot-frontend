@@ -14,7 +14,7 @@ export const useAdminChat = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await conversationApi.getConversations()
+      const response = await conversationApi.getConversationsAPI()
       // Transform data: nếu userId là object, lấy email hoặc fullName
       const transformedData = (response.data || []).map(conv => ({
         ...conv,
