@@ -66,6 +66,7 @@ function App() {
         </ClientProviders>
       }>
         <Route index element={<ChatPage />} />
+        <Route path="chat/:id" element={<ChatPage />} />
         <Route path="settings" element={<SettingPage />} /> 
       </Route>
 

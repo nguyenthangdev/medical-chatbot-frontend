@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Outlet, useParams } from 'react-router-dom';
 import Sidebar from '../../components/Client/Sidebar';
 import { useChat } from '../../hooks/Client/useChat';
 import { useAuth } from '../../contexts/Client/ClientAuthContext';
@@ -10,18 +10,28 @@ const ClientLayout = () => {
   const { user } = useAuth();
   
   const [refreshSidebar, setRefreshSidebar] = useState(0);
-
+  const { id } = useParams();
+  
   const { 
     messages, 
     loading, 
     conversationId, 
     sendMessage, 
+    isLimitReached,
     loadConversation, 
     clearChat 
   } = useChat(
     user?._id, 
     () => setRefreshSidebar(prev => prev + 1)
   );
+
+  useEffect(() => {
+    if (id) {
+      loadConversation(id);
+    } else {
+      clearChat();
+    }
+  }, [id, loadConversation, clearChat]);
 
   return (
     <div className="flex h-screen w-full bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-100 overflow-hidden relative">
@@ -56,7 +66,7 @@ const ClientLayout = () => {
       </div>
       
       <main className="flex-1 flex flex-col h-full relative">
-        <Outlet context={{ isMobileMenuOpen, setIsMobileMenuOpen, fontSize, setFontSize, messages, loading, sendMessage }} />
+        <Outlet context={{ isMobileMenuOpen, setIsMobileMenuOpen, fontSize, setFontSize, messages, loading, sendMessage, isLimitReached }} />
       </main>
     </div>
   );

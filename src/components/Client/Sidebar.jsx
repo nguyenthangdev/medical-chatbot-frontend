@@ -1,16 +1,34 @@
-import { useState, useEffect } from 'react';
+/* eslint-disable no-unused-vars */
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getConversations } from '../../apis/Client/chat.api';
 import { useAuth } from '../../contexts/Client/ClientAuthContext.jsx';
+import { Search } from "lucide-react";
+import { getConversations, deleteConversationAPI, renameConversationAPI } from '../../apis/Client/chat.api';
+import { MoreVertical, Star, Pencil, Trash2 } from "lucide-react";
+import { toast } from 'react-toastify';
 
-// Bổ sung thêm prop currentConversationId
-const Sidebar = ({ currentConversationId, onSelectConversation, onNewChat, refreshTrigger }) => {
+const Sidebar = ({ currentConversationId, refreshTrigger, onRefreshSidebar, onCloseMobile }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [conversations, setConversations] = useState([]);
   const [searchText, setSearchText] = useState('');
   const { user } = useAuth();
+
+  // State quản lý Menu 3 chấm
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  // Click ra ngoài để đóng menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -52,71 +70,127 @@ const Sidebar = ({ currentConversationId, onSelectConversation, onNewChat, refre
 
   const grouped = groupByDate(filtered);
 
-  const handleSelectConversation = (conv) => {
-    // Không cần set local state nữa, gọi thẳng hàm của Cha
-    onSelectConversation?.(conv._id);
+  // const handleSelectConversation = (conv) => {
+  //   // Không cần set local state nữa, gọi thẳng hàm của Cha
+  //   onSelectConversation?.(conv._id);
+  // };
+
+  const handleSelectConversation = (id) => {
+    navigate(`/chat/${id}`);
+    if (onCloseMobile) onCloseMobile();
   };
 
   const handleNewChat = () => {
-    // Không cần set local state nữa
-    onNewChat?.();
     navigate('/');
+    if (onCloseMobile) onCloseMobile();
+  };
+
+  // const handleNewChat = () => {
+  //   // Không cần set local state nữa
+  //   onNewChat?.();
+  //   navigate('/');
+  // };
+
+  const handleDelete = async (e, id) => {
+    e.stopPropagation(); // Ngăn việc click trúng thẻ bao ngoài
+    setOpenMenuId(null);
+    if (window.confirm("Bạn có chắc chắn muốn xóa lịch sử đoạn chat này không?")) {
+      try {
+        await deleteConversationAPI(id);
+        if (currentConversationId === id) navigate('/'); // Đang xem mà xóa thì về trang chủ
+        onRefreshSidebar();
+      } catch (err) {
+        toast.error("Xóa thất bại");
+      }
+    }
+  };
+
+  const handleRename = async (e, id, currentTitle) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
+    const newTitle = prompt("Nhập tên mới cho cuộc hội thoại:", currentTitle);
+    if (newTitle && newTitle.trim() !== currentTitle) {
+      try {
+        await renameConversationAPI(id, newTitle);
+        onRefreshSidebar();
+      } catch (err) {
+        toast.error("Đổi tên thất bại");
+      }
+    }
   };
 
   return (
-    <div className="w-full md:w-80 h-full bg-white border-r border-gray-200 flex flex-col p-4 shadow-sm relative">
+    <div className="w-full md:w-[300px] h-full bg-[#f9f9f9] border-r border-gray-200 flex flex-col p-4 shadow-sm relative">
 
-      {/* Nút tạo mới */}
       <button
         onClick={handleNewChat}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded-2xl flex items-center gap-3 transition-all shadow-md text-xl"
+        className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-800 font-semibold py-3 px-4 rounded-xl flex items-center justify-between transition-all shadow-sm"
       >
-        <span className="text-2xl bg-white/20 rounded-full w-8 h-8 flex items-center justify-center">+</span>
-        Bắt đầu khám mới
+        <span className="flex items-center gap-2">
+          <span className="text-xl">+</span> Bắt đầu khám mới
+        </span>
       </button>
 
-      {/* Thanh tìm kiếm */}
-      <div className="mt-6 relative">
-        <span className="absolute left-4 top-3.5 text-xl">🔍</span>
+      <div className="mt-4 relative">
+        <span className="absolute left-3 top-2.5 text-gray-400"><Search size={18} /></span>
         <input
           type="text"
           placeholder="Tìm lịch sử khám..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-xl py-3 pl-12 pr-4 text-base focus:outline-none focus:border-blue-400 focus:bg-white transition-colors placeholder-gray-400"
+          className="w-full bg-white border border-gray-200 text-gray-800 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:border-blue-400 transition-colors"
         />
       </div>
 
-      {/* Danh sách conversations */}
-      <div className="mt-6 flex-1 overflow-y-auto pr-2">
+      <div className="mt-4 flex-1 overflow-y-auto pr-1">
         {!conversations || conversations.length === 0 ? (
           <p className="text-gray-400 text-sm text-center mt-8">Chưa có lịch sử khám</p>
         ) : (
           Object.entries(grouped).map(([label, items]) =>
             items.length === 0 ? null : (
               <div key={label} className="mb-4">
-                <h3 className="text-gray-400 font-bold mb-2 text-xs uppercase tracking-wider ml-1">
+                <h3 className="text-gray-400 font-semibold mb-1 text-[11px] uppercase tracking-wider ml-1">
                   {label}
                 </h3>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {items.map((conv) => (
-                    <button
+                    <div 
                       key={conv._id}
-                      onClick={() => handleSelectConversation(conv)}
-                      // Đổi activeId thành currentConversationId để check css
-                      className={`w-full text-left p-3 rounded-xl flex items-center gap-3 transition-colors group ${
+                      onClick={() => handleSelectConversation(conv._id)}
+                      className={`relative w-full text-left p-2.5 rounded-lg flex items-center justify-between transition-colors group cursor-pointer ${
                         currentConversationId === conv._id
-                          ? 'bg-blue-50 border border-blue-100'
-                          : 'hover:bg-gray-100'
+                          ? 'bg-gray-200/60'
+                          : 'hover:bg-gray-200/40'
                       }`}
                     >
-                      <span className={`group-hover:text-blue-500 ${currentConversationId === conv._id ? 'text-blue-500' : 'text-gray-400'}`}>
-                        💬
-                      </span>
-                      <span className="truncate text-[15px] font-medium text-gray-700">
+                      <span className="truncate text-sm font-medium text-gray-700 pr-6">
                         {conv.title || 'Cuộc hội thoại mới'}
                       </span>
-                    </button>
+
+                      {/* NÚT 3 CHẤM GIỐNG CLAUDE */}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === conv._id ? null : conv._id); }}
+                        className={`absolute right-2 p-1 rounded-md transition-opacity ${openMenuId === conv._id || currentConversationId === conv._id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} hover:bg-gray-300 text-gray-500`}
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+
+                      {/* DROPDOWN MENU */}
+                      {openMenuId === conv._id && (
+                        <div ref={menuRef} className="absolute right-4 top-8 w-40 bg-[#2d2d2d] text-[#ececec] rounded-xl shadow-xl border border-gray-700 z-50 py-1 overflow-hidden">
+                           <button className="w-full px-4 py-2 text-sm text-left flex items-center gap-2 hover:bg-[#3d3d3d] transition">
+                              <Star size={14} /> Star
+                           </button>
+                           <button onClick={(e) => handleRename(e, conv._id, conv.title)} className="w-full px-4 py-2 text-sm text-left flex items-center gap-2 hover:bg-[#3d3d3d] transition">
+                              <Pencil size={14} /> Rename
+                           </button>
+                           <button onClick={(e) => handleDelete(e, conv._id)} className="w-full px-4 py-2 text-sm text-left flex items-center gap-2 hover:bg-[#3d3d3d] text-red-400 hover:text-red-300 transition">
+                              <Trash2 size={14} /> Delete
+                           </button>
+                        </div>
+                      )}
+
+                    </div>
                   ))}
                 </div>
               </div>
@@ -125,30 +199,22 @@ const Sidebar = ({ currentConversationId, onSelectConversation, onNewChat, refre
         )}
       </div>
 
-      {/* Bottom: Avatar + Name */}
-      <div className="mt-auto pt-3 border-t border-gray-100">
+      {/* Cài đặt & Profile */}
+      <div className="mt-auto pt-3 border-t border-gray-200">
         <button
-          onClick={() => navigate('/settings')}
-          className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
-            location.pathname === '/settings'
-              ? 'bg-blue-50 border border-blue-100'
-              : 'hover:bg-gray-100 border border-transparent'
+          onClick={() => { navigate('/settings'); if (onCloseMobile) onCloseMobile(); }}
+          className={`w-full flex items-center gap-3 p-2 rounded-xl transition-all duration-200 ${
+            location.pathname === '/settings' ? 'bg-gray-200/60' : 'hover:bg-gray-200/40'
           }`}
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-sm flex-shrink-0">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-700 to-black text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
             {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
           </div>
           <div className="flex-1 flex flex-col items-start overflow-hidden">
-            <span className="text-gray-800 font-semibold text-[15px] truncate w-full text-left">
+            <span className="text-gray-800 font-semibold text-sm truncate w-full text-left">
               {user?.fullName || 'Đang tải...'}
             </span>
-            <span className="text-gray-500 text-xs">Tài khoản miễn phí</span>
-          </div>
-          <div className="text-gray-400 flex-shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.894 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <span className="text-gray-500 text-[11px]">Tài khoản miễn phí</span>
           </div>
         </button>
       </div>

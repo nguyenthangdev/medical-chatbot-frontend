@@ -1,14 +1,18 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'; 
 import { updateMyProfileAPI } from '../../../apis/Client/myProfile.api';
 import { useAuth } from '../../../contexts/Client/ClientAuthContext.jsx';
+import { deleteAllConversationsAPI } from '../../../apis/Client/chat.api.js';
+import { Trash2 } from 'lucide-react'; 
 
 const SettingPage = () => {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
   const { refreshUser, user, isLoading, logout } = useAuth();
-
 
   const [fullName, setFullName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -51,6 +55,22 @@ const SettingPage = () => {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await logout()
+  };
+
+  const handleDeleteAllChats = async () => {
+    if (window.confirm("CẢNH BÁO: Hành động này sẽ xóa vĩnh viễn TOÀN BỘ lịch sử khám của bạn. Bạn có chắc chắn không?")) {
+      setIsDeletingAll(true);
+      try {
+        await deleteAllConversationsAPI();
+        toast.success("Đã xóa toàn bộ lịch sử trò chuyện!");
+        // Force refresh để xóa trắng Sidebar
+        window.location.href = '/'; 
+      } catch (error) {
+        toast.error("Xóa thất bại!");
+      } finally {
+        setIsDeletingAll(false);
+      }
+    }
   };
 
   if (isLoading) {
@@ -148,12 +168,25 @@ const SettingPage = () => {
           </div>
         </div>
 
-        {/* Khối 3: Đăng xuất */}
+        {/* KHỐI 3: VÙNG NGUY HIỂM (XÓA CHAT) */}
+        <div className="bg-red-50 p-6 rounded-2xl shadow-sm border border-red-100 mt-6">
+           <h2 className="text-lg font-bold text-red-700 mb-2">Vùng Nguy Hiểm</h2>
+           <p className="text-sm text-red-600/80 mb-4">Các hành động dưới đây không thể hoàn tác.</p>
+           <button 
+              onClick={handleDeleteAllChats}
+              disabled={isDeletingAll}
+              className="w-full bg-white text-red-600 border border-red-200 hover:bg-red-600 hover:text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={18} /> {isDeletingAll ? 'Đang xóa...' : 'Xóa tất cả lịch sử chat'}
+            </button>
+        </div>
+
+        {/* Khối 4: Đăng xuất */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center mt-6">
           <button 
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="w-full bg-red-100 text-red-600 hover:bg-red-200 font-bold py-4 rounded-xl text-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+            className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
           >
             <span>🚪</span> {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất tài khoản'}
           </button>

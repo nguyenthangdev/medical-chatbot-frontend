@@ -21,10 +21,20 @@ export const getMessages = async (conversationId) => {
   return response.data;
 }
 
-export const deleteConversation = async (conversationId) => {
+export const deleteConversationAPI = async (conversationId) => {
   const response = await authorizedAxiosInstance.delete(`${API_ROOT}/api/v1/chat/conversation/${conversationId}`);
   return response.data;
 }
+
+export const renameConversationAPI = async (id, title) => {
+  const response = await authorizedAxiosInstance.put(`${API_ROOT}/api/v1/chat/conversation/${id}`, { title });
+  return response.data;
+};
+
+export const deleteAllConversationsAPI = async () => {
+  const response = await authorizedAxiosInstance.delete(`${API_ROOT}/api/v1/chat/conversations/all`);
+  return response.data;
+};
 
 export const speechToText = async (audioBlob) => {
   const formData = new FormData();
