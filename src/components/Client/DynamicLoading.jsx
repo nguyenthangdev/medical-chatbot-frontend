@@ -27,14 +27,12 @@ const DynamicLoading = () => {
         AI
       </div>
       <div className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm rounded-tl-none flex items-center gap-4">
-        {/* Cụm 3 dấu chấm nhảy nhảy */}
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
           <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
           <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
         
-        {/* Dòng chữ thay đổi (có hiệu ứng mờ dần khi đổi) */}
         <span 
           key={textIndex} // Mẹo của React: Đổi key sẽ trigger lại animation
           className="text-[15px] font-medium text-gray-500 animate-in fade-in duration-500 italic"

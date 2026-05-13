@@ -6,6 +6,7 @@ import { useOutletContext } from 'react-router-dom';
 import { speechToText } from '../../../apis/Client/chat.api';
 import SmoothTyping from "../../../components/Client/SmoothTyping"
 import DynamicLoading from "../../../components/Client/DynamicLoading"
+import TypewriterMessage from "../../../components/Client/TypewriterMessage"
 
 const ChatPage = () => {
   const [selectedModel, setSelectedModel] = useState('qwen');
@@ -65,7 +66,6 @@ const ChatPage = () => {
         try {
           // GỌI API STT TỪ BACKEND
           const res = await speechToText(audioBlob);
-          // CHÚ Ý: Vì chat.api.js đã return response.data, nên ở đây lấy thẳng res.text
           const text = res.text || res.data?.text; 
 
           if (text) {
@@ -102,7 +102,6 @@ const ChatPage = () => {
   return (
     <div className="flex flex-col h-full bg-transparent relative">
       
-      {/* Header Mobile & Navbar Chọn Model giữ nguyên như cũ... */}
       <header className="md:hidden bg-blue-600 text-white p-4 flex items-center justify-between shadow-md z-20">
         <h1 className="text-xl font-bold flex items-center gap-2">Bác sĩ Ảo</h1>
         <button onClick={() => setIsMobileMenuOpen(true)} className="text-2xl p-2 hover:bg-blue-700 rounded-lg">☰</button>
@@ -124,17 +123,14 @@ const ChatPage = () => {
         </div>
       </div>
 
-      {/* KHU VỰC HIỂN THỊ TIN NHẮN */}
       <div className="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-24 space-y-6">
         {(messages ?? []).map((msg, index) => (
           <div key={msg.id || index} className={`flex gap-4 max-w-4xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             
-            {/* Avatar AI / User */}
             <div className={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full text-white shadow-sm ${msg.role === 'assistant' ? 'bg-blue-500' : 'bg-gray-400'}`}>
               {msg.role === 'assistant' ? "AI" : "U"}
             </div>
 
-            {/* Bubble Chat */}
             <div className={`p-4 rounded-2xl max-w-[85%] md:max-w-[75%] shadow-sm leading-relaxed ${getTextSizeClass()}
                 ${msg.role === 'assistant' ? 'bg-white text-gray-800 rounded-tl-none border border-gray-100' : 'bg-blue-600 text-white rounded-tr-none'}`}
             >
@@ -144,17 +140,20 @@ const ChatPage = () => {
               
               {/* Nội dung tin nhắn */}
               {/* {msg.content && <p className="whitespace-pre-wrap">{msg.content}</p>} */}
-              {msg.content && (
+              {/* {msg.content && (
                 (msg.role === 'assistant' && msg.isNew) 
                   ? <SmoothTyping text={msg.content} /> 
                   : <p className="whitespace-pre-wrap">{msg.content}</p>
+              )} */}
+              {msg.content && (
+                (msg.role === 'assistant' && msg.isNew) 
+                  ? <TypewriterMessage text={msg.content} /> 
+                  : <p className="whitespace-pre-wrap">{msg.content}</p>
               )}
 
-              {/* TÍNH NĂNG ĐẶC BIỆT DÀNH CHO AI ASSISTANT */}
               {msg.role === 'assistant' && (
                 <div className="mt-3 flex flex-col gap-2">
                   
-                  {/* Hiển thị cảnh báo mức độ rủi ro CAO */}
                   {msg.risk_level === 'high' && (
                      <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex gap-2 items-start shadow-sm mt-2">
                         <AlertTriangle size={18} className="mt-0.5 shrink-0 text-red-500"/>
@@ -165,7 +164,6 @@ const ChatPage = () => {
                      </div>
                   )}
 
-                  {/* Hiển thị Nguồn trích dẫn (RAG) */}
                   {msg.sources && msg.sources.length > 0 && (
                      <div className="pt-3 border-t border-gray-100 mt-2">
                         <div className="flex items-center gap-1 text-xs font-semibold text-gray-500 mb-1">
@@ -201,11 +199,9 @@ const ChatPage = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Khu vực nhập liệu form giữ nguyên... */}
       <div className="p-4 md:p-6 w-full flex justify-center z-10">
         <div className="w-full max-w-4xl flex flex-col items-center relative">
           <form onSubmit={handleSend} className="w-full flex items-center gap-2 bg-white rounded-[32px] pl-3 pr-2 py-2 shadow-sm border border-gray-200">
-            {/* Input giữ nguyên */}
             <input type="text" placeholder="Hỏi bác sĩ bất cứ điều gì..." className="flex-1 bg-transparent px-2 py-3 text-[19px] outline-none" value={inputText} onChange={(e) => setInputText(e.target.value)} disabled={isRecording} />
             
             <div className="flex items-center pr-1">
