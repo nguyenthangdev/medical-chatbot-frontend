@@ -4,6 +4,8 @@ import { IoSendSharp } from "react-icons/io5";
 import { AlertTriangle, Info } from "lucide-react"; // Thêm icon cảnh báo
 import { useOutletContext } from 'react-router-dom';
 import { speechToText } from '../../../apis/Client/chat.api';
+import SmoothTyping from "../../../components/Client/SmoothTyping"
+import DynamicLoading from "../../../components/Client/DynamicLoading"
 
 const ChatPage = () => {
   const [selectedModel, setSelectedModel] = useState('qwen');
@@ -141,7 +143,12 @@ const ChatPage = () => {
               )}
               
               {/* Nội dung tin nhắn */}
-              {msg.content && <p className="whitespace-pre-wrap">{msg.content}</p>}
+              {/* {msg.content && <p className="whitespace-pre-wrap">{msg.content}</p>} */}
+              {msg.content && (
+                (msg.role === 'assistant' && msg.isNew) 
+                  ? <SmoothTyping text={msg.content} /> 
+                  : <p className="whitespace-pre-wrap">{msg.content}</p>
+              )}
 
               {/* TÍNH NĂNG ĐẶC BIỆT DÀNH CHO AI ASSISTANT */}
               {msg.role === 'assistant' && (
@@ -180,7 +187,7 @@ const ChatPage = () => {
         ))}
         
         {/* Loading Indicator */}
-        {loading && (
+        {/* {loading && (
            <div className="flex gap-4 max-w-4xl mx-auto">
              <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-500 text-white shadow-sm">AI</div>
              <div className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm rounded-tl-none flex items-center gap-1">
@@ -189,7 +196,8 @@ const ChatPage = () => {
                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
              </div>
            </div>
-        )}
+        )} */}
+        {loading && <DynamicLoading />}
         <div ref={messagesEndRef} />
       </div>
 
