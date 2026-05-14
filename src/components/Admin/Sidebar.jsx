@@ -9,7 +9,9 @@ import {
     User,
     ChevronLeft,
     ChevronRight,
-    ShieldUser
+    ShieldUser,
+    Shield,
+    Key
 } from "lucide-react";
 export default function Sidebar({ open, collapsed, toggleCollapse }) {
 
@@ -21,6 +23,8 @@ export default function Sidebar({ open, collapsed, toggleCollapse }) {
         { name: "Tài khoản quản trị", path: "/admin/accounts", icon: <ShieldUser size={20} /> },
         { name: "Cuộc hội thoại", path: "/admin/conversations", icon: <MessageCircle size={20} /> },
         { name: "Tin nhắn", path: "/admin/messages", icon: <Mail size={20} /> },
+        { name: "Nhóm quyền", path: "/admin/roles", icon: <Shield size={20} /> },
+        { name: "Phân quyền", path: "/admin/permissions", icon: <Key size={20} /> },
         { name: "Cài đặt", path: "/admin/settings", icon: <Settings size={20} /> },
         { name: "Thông tin cá nhân", path: "/admin/my-profile", icon: <User size={20} /> }
     ];

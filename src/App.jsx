@@ -36,6 +36,10 @@ import { AdminProviders } from './AppProviders';
 import UnauthorizedRoutesAdmin from './components/Admin/UnauthorizedRoutes';
 import PrivateRouteAdmin from './components/Admin/PrivateRoute';
 import Error404Page from './pages/404/Error404Page';
+import RoleIndex from "./pages/Admin/Role/RoleIndex"
+import RoleForm from "./components/Admin/RoleForm"
+import PermissionIndex from "./pages/Admin/Permission/PermissionIndex"
+import RoleDetail from "./pages/Admin/Role/RoleDetail"
 
 function App() {
   const navigate = useNavigate();
@@ -112,6 +116,11 @@ function App() {
         <Route path="messages" element={<MessageIndex />} />
         <Route path="messages/:id" element={<MessageDetail />} />
         <Route path="settings" element={<SettingIndex />} />
+        <Route path="roles" element={<RoleIndex />} />
+        <Route path="roles/create" element={<RoleForm />} />
+        <Route path="roles/:id" element={<RoleDetail />} />
+        <Route path="roles/:id/edit" element={<RoleForm />} />
+        <Route path="permissions" element={<PermissionIndex />} />
       </Route>
 
       <Route element={

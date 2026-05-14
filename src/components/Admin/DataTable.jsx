@@ -7,7 +7,8 @@ export default function DataTable({
     basePath = "",
     onDelete,
     onToggle,
-    actions = ["view", "edit", "delete"]
+    actions = ["view", "edit", "delete"],
+    hideActionsIf
 }) {
     return (
         <div className="bg-white shadow rounded-lg text-gray-800 w-full">
@@ -48,22 +49,27 @@ export default function DataTable({
                                     </td>
                                 ))}
                                 <td className="py-3 px-4 text-center">
-                                    <div className="flex justify-center gap-3">
-                                        {actions?.includes("view") && (
-                                            <Link to={`${basePath}/${row._id || row.id}`} className="text-blue-500 hover:text-blue-700 hover:underline font-medium cursor-pointer">Xem</Link>
-                                        )}
-                                        {actions?.includes("edit") && (
-                                            <Link to={`${basePath}/${row._id || row.id}/edit`} className="text-green-500 hover:text-green-700 hover:underline font-medium cursor-pointer">Sửa</Link>
-                                        )}
-                                        {actions?.includes("toggle") && (
-                                            <button onClick={() => onToggle?.(row._id || row.id)} className="text-yellow-600 hover:text-yellow-800 hover:underline font-medium cursor-pointer">
-                                                {row.status === 'active' ? 'Hoạt động' : 'Ngừng hoạt động'}
-                                            </button>
-                                        )}
-                                        {actions?.includes("delete") && (
-                                            <button onClick={() => onDelete?.(row._id || row.id)} className="text-red-500 hover:text-red-700 hover:underline font-medium cursor-pointer">Xóa</button>
-                                        )}
-                                    </div>
+                                    {hideActionsIf && hideActionsIf(row) ? (
+                                        <span className="text-xs text-gray-400 italic font-medium">Mặc định hệ thống</span>
+                                    ) : (
+                                        <div className="flex justify-center gap-3">
+                                            {actions?.includes("view") && (
+                                                <Link to={`${basePath}/${row._id || row.id}`} className="text-blue-500 hover:text-blue-700 hover:underline font-medium cursor-pointer">Xem</Link>
+                                            )}
+                                            {actions?.includes("edit") && (
+                                                <Link to={`${basePath}/${row._id || row.id}/edit`} className="text-green-500 hover:text-green-700 hover:underline font-medium cursor-pointer">Sửa</Link>
+                                            )}
+                                            {actions?.includes("toggle") && (
+                                                <button onClick={() => onToggle?.(row._id || row.id)} className="text-yellow-600 hover:text-yellow-800 hover:underline font-medium cursor-pointer">
+                                                    {row.status === 'active' ? 'Hoạt động' : 'Ngừng hoạt động'}
+                                                </button>
+                                            )}
+                                            {actions?.includes("delete") && (
+                                                <button onClick={() => onDelete?.(row._id || row.id)} className="text-red-500 hover:text-red-700 hover:underline font-medium cursor-pointer">Xóa</button>
+                                            )}
+                                        </div>
+                                    )}
+                                    
                                 </td>
                             </tr>
                         )) : (
