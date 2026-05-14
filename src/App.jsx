@@ -19,6 +19,9 @@ import SettingIndex from './pages/Admin/Setting/Index';
 
 import ChatPage from './pages/Client/ChatPage/ChatPage'
 import SettingPage from './pages/Client/Setting/SettingPage';
+import UpgradePage from './pages/Client/Upgrade/UpgradePage';
+import UsagePolicyPage from './pages/Client/Policy/UsagePolicyPage';
+import PrivacyPolicyPage from './pages/Client/Policy/PrivacyPolicyPage';
 import ClientLogin from './pages/Client/Auth/ClientLogin';
 import ClientRegister from './pages/Client/Auth/ClientRegister';
 import { ClientProviders } from './AppProviders'
@@ -67,6 +70,9 @@ function App() {
       }>
         <Route index element={<ChatPage />} />
         <Route path="chat/:id" element={<ChatPage />} />
+        <Route path="upgrade" element={<UpgradePage />} />
+        <Route path="usage-policy" element={<UsagePolicyPage />} />
+        <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="settings" element={<SettingPage />} /> 
       </Route>
 

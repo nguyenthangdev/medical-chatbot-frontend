@@ -2,14 +2,14 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useState } from 'react';
 
-const ExpandableMarkdown = ({ content, isStreaming }) => {
+const ExpandableMarkdown = ({ content, isStreaming, isDarkMode = false }) => {
   const [expanded, setExpanded] = useState(false);
   const limit = 600; // Giới hạn ký tự trước khi thu gọn
 
   // Nếu đang stream hoặc chữ ngắn thì hiện toàn bộ
   if (isStreaming || content.length <= limit) {
     return (
-      <div className="prose prose-sm max-w-none text-[15px] text-gray-800 markdown-body">
+      <div className={`prose prose-sm max-w-none text-[15px] leading-7 markdown-body ${isDarkMode ? 'text-gray-200 prose-invert' : 'text-gray-800'}`}>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>
     );
@@ -19,13 +19,13 @@ const ExpandableMarkdown = ({ content, isStreaming }) => {
   const displayContent = expanded ? content : content.slice(0, limit) + '...';
 
   return (
-    <div className="prose prose-sm max-w-none text-[15px] text-gray-800 markdown-body">
+    <div className={`prose prose-sm max-w-none text-[15px] leading-7 markdown-body ${isDarkMode ? 'text-gray-200 prose-invert' : 'text-gray-800'}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayContent}</ReactMarkdown>
       <button 
         onClick={() => setExpanded(!expanded)} 
-        className="text-blue-600 hover:text-blue-800 text-sm font-semibold mt-2 underline outline-none"
+        className={`${isDarkMode ? 'text-[#f1c7b7] hover:text-white' : 'text-blue-600 hover:text-blue-800'} text-sm font-semibold mt-2 underline outline-none cursor-pointer`}
       >
-        {expanded ? 'Show less' : 'Show more'}
+        {expanded ? 'Ẩn bớt' : 'Hiển thị thêm'}
       </button>
     </div>
   );

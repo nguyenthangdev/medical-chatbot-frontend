@@ -6,18 +6,20 @@ import { toast } from 'react-toastify';
 import { updateMyProfileAPI } from '../../../apis/Client/myProfile.api';
 import { useAuth } from '../../../contexts/Client/ClientAuthContext.jsx';
 import { deleteAllConversationsAPI } from '../../../apis/Client/chat.api.js';
-import { Trash2 } from 'lucide-react'; 
+import { ArrowLeft, LogOut, MonitorCog, Moon, Save, Sun, Trash2, Type, UserRound } from 'lucide-react'; 
+import ConfirmDialog from '../../../components/Client/ConfirmDialog.jsx';
 
 const SettingPage = () => {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const { refreshUser, user, isLoading, logout } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const { fontSize, setFontSize } = useOutletContext();
+  const { fontSize, setFontSize, onChatHistoryCleared, isDarkMode, setIsDarkMode } = useOutletContext();
 
   useEffect(() => {
     if (user?.fullName) {
@@ -58,18 +60,20 @@ const SettingPage = () => {
   };
 
   const handleDeleteAllChats = async () => {
-    if (window.confirm("CẢNH BÁO: Hành động này sẽ xóa vĩnh viễn TOÀN BỘ lịch sử khám của bạn. Bạn có chắc chắn không?")) {
-      setIsDeletingAll(true);
-      try {
-        await deleteAllConversationsAPI();
-        toast.success("Đã xóa toàn bộ lịch sử trò chuyện!");
-        // Force refresh để xóa trắng Sidebar
-        window.location.href = '/'; 
-      } catch (error) {
-        toast.error("Xóa thất bại!");
-      } finally {
-        setIsDeletingAll(false);
+    setIsDeletingAll(true);
+    try {
+      const res = await deleteAllConversationsAPI();
+      if (res.code === 200) {
+        toast.success(res.message);
+        setShowDeleteAllDialog(false);
+        onChatHistoryCleared?.();
+      } else {
+        toast.error(res.message);
       }
+    } catch (error) {
+      toast.error("Xóa thất bại!");
+    } finally {
+      setIsDeletingAll(false);
     }
   };
 
@@ -81,118 +85,236 @@ const SettingPage = () => {
     );
   }
 
+  const pageBg = isDarkMode ? 'bg-[#1f1f1f] text-gray-100' : 'bg-[#f7f8fb] text-gray-900';
+  const cardClass = isDarkMode
+    ? 'bg-[#2b2b29] border-white/10 shadow-black/20'
+    : 'bg-white border-gray-200 shadow-gray-200/70';
+  const subtleCardClass = isDarkMode
+    ? 'bg-white/5 border-white/10'
+    : 'bg-gray-50 border-gray-200';
+  const mutedText = isDarkMode ? 'text-gray-400' : 'text-gray-500';
+  const inputClass = isDarkMode
+    ? 'bg-white/5 border-white/10 text-gray-100 placeholder:text-gray-500 focus:border-[#da7756] focus:ring-[#da7756]/20'
+    : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#da7756] focus:ring-[#da7756]/15';
+  const selectedOptionClass = 'border-[#da7756] bg-[#da7756]/10 text-[#c86143] ring-2 ring-[#da7756]/15';
+  const normalOptionClass = isDarkMode
+    ? 'border-white/10 text-gray-300 hover:border-white/25 hover:bg-white/5'
+    : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50';
+
   return (
-    <div className="flex flex-col h-full bg-transparent overflow-y-auto">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-6 flex items-center gap-4 shadow-sm sticky top-0 z-10">
-        <button 
-          onClick={() => navigate('/')}
-          className="text-3xl text-blue-600 hover:text-blue-800 w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 transition-colors"
-        >
-          ⬅️
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800">Cài đặt hệ thống</h1>
-      </div>
-
-      {/* Nội dung Cài đặt */}
-      <div className="max-w-3xl w-full mx-auto p-6 space-y-6 mt-4">
-        
-        {/* Khối 1: Thông tin cá nhân */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold text-blue-700 mb-4 flex items-center gap-2">
-            👤 Thông tin của bạn
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-gray-600 font-medium mb-2">Họ và tên</label>
-              <input 
-                type="text" 
-                value={fullName} // Chuyển sang dùng value và onChange
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-xl p-3 text-lg focus:border-blue-500 outline-none transition-colors"
-                placeholder="Nhập họ và tên..."
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 font-medium mb-2">Tài khoản (Email / SĐT)</label>
-              <input 
-                type="text" 
-                defaultValue={user?.email || user?.phone || ""} 
-                className="w-full border-2 border-gray-200 rounded-xl p-3 text-lg bg-gray-100 text-gray-500 outline-none"
-                disabled
-              />
-              <span className="text-sm text-gray-400 mt-1 block">* Tên tài khoản không thể thay đổi</span>
-            </div>
-            
-            <button 
-              onClick={handleUpdateProfile}
-              disabled={isSaving}
-              className={`font-bold py-3 px-6 rounded-xl text-lg mt-2 transition-colors ${
-                isSaving 
-                  ? 'bg-blue-400 text-white cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {isSaving ? 'Đang lưu...' : 'Lưu thông tin'}
-            </button>
-          </div>
-        </div>
-
-        {/* Khối 2: Tùy chỉnh hiển thị */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold text-blue-700 mb-4 flex items-center gap-2">
-            🔤 Tùy chỉnh hiển thị
-          </h2>
-          <div className="space-y-4">
-            <p className="text-gray-600 font-medium">Kích thước chữ trong đoạn chat</p>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => handleChangeFontSize('small')}
-                className={`flex-1 py-3 border-2 rounded-xl text-lg transition-colors ${fontSize === 'small' ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold' : 'border-gray-200 hover:border-blue-300'}`}
-              >
-                Nhỏ
-              </button>
-              <button 
-                onClick={() => handleChangeFontSize('medium')}
-                className={`flex-1 py-3 border-2 rounded-xl text-lg transition-colors ${fontSize === 'medium' ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold' : 'border-gray-200 hover:border-blue-300'}`}
-              >
-                Vừa
-              </button>
-              <button 
-                onClick={() => handleChangeFontSize('large')}
-                className={`flex-1 py-3 border-2 rounded-xl text-xl transition-colors ${fontSize === 'large' ? 'border-blue-600 bg-blue-50 text-blue-700 font-bold' : 'border-gray-200 hover:border-blue-300'}`}
-              >
-                To
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* KHỐI 3: VÙNG NGUY HIỂM (XÓA CHAT) */}
-        <div className="bg-red-50 p-6 rounded-2xl shadow-sm border border-red-100 mt-6">
-           <h2 className="text-lg font-bold text-red-700 mb-2">Vùng Nguy Hiểm</h2>
-           <p className="text-sm text-red-600/80 mb-4">Các hành động dưới đây không thể hoàn tác.</p>
-           <button 
-              onClick={handleDeleteAllChats}
-              disabled={isDeletingAll}
-              className="w-full bg-white text-red-600 border border-red-200 hover:bg-red-600 hover:text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-            >
-              <Trash2 size={18} /> {isDeletingAll ? 'Đang xóa...' : 'Xóa tất cả lịch sử chat'}
-            </button>
-        </div>
-
-        {/* Khối 4: Đăng xuất */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center mt-6">
-          <button 
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+    <div className={`flex h-full flex-col overflow-y-auto ${pageBg}`}>
+      <div className={`sticky top-0 z-10 border-b backdrop-blur-xl ${
+        isDarkMode ? 'border-white/10 bg-[#1f1f1f]/90' : 'border-gray-200 bg-white/85'
+      }`}>
+        <div className="mx-auto flex w-full max-w-5xl items-center gap-4 px-5 py-5">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className={`flex h-11 w-11 items-center justify-center rounded-2xl transition ${
+              isDarkMode ? 'bg-white/5 text-gray-200 hover:bg-white/10' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            aria-label="Quay lại"
           >
-            <span>🚪</span> {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất tài khoản'}
+            <ArrowLeft size={21} />
           </button>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold">Cài đặt</h1>
+            <p className={`mt-0.5 text-sm ${mutedText}`}>Quản lý hồ sơ, giao diện và dữ liệu hội thoại của bạn.</p>
+          </div>
         </div>
-
       </div>
+
+      <div className="mx-auto w-full max-w-5xl px-5 py-8">
+        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+          <div className="space-y-6">
+            <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[#da7756]/12 text-[#da7756]">
+                  <UserRound size={23} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-bold">Thông tin của bạn</h2>
+                  <p className={`mt-1 text-sm ${mutedText}`}>Cập nhật tên hiển thị trong khu vực khách hàng.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-5">
+                <div>
+                  <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Họ và tên</label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                    placeholder="Nhập họ và tên..."
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Tài khoản</label>
+                  <input
+                    type="text"
+                    defaultValue={user?.email || user?.phone || ""}
+                    className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ${
+                      isDarkMode ? 'border-white/10 bg-white/5 text-gray-400' : 'border-gray-200 bg-gray-100 text-gray-500'
+                    }`}
+                    disabled
+                  />
+                  <span className={`mt-2 block text-xs ${mutedText}`}>Tên tài khoản không thể thay đổi.</span>
+                </div>
+
+                <button
+                  onClick={handleUpdateProfile}
+                  disabled={isSaving}
+                  className="inline-flex w-fit items-center justify-center gap-2 rounded-2xl bg-[#da7756] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#c96648] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Save size={17} />
+                  {isSaving ? 'Đang lưu...' : 'Lưu thông tin'}
+                </button>
+              </div>
+            </section>
+
+            <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[#da7756]/12 text-[#da7756]">
+                  <MonitorCog size={23} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-bold">Tùy chỉnh hiển thị</h2>
+                  <p className={`mt-1 text-sm ${mutedText}`}>Điều chỉnh giao diện đọc chat theo thói quen của bạn.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-5">
+                <div className={`rounded-3xl border p-4 ${subtleCardClass}`}>
+                  <div className="mb-4 flex items-center gap-2">
+                    <Type size={18} className="text-[#da7756]" />
+                    <p className="font-semibold">Kích thước chữ trong đoạn chat</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      onClick={() => handleChangeFontSize('small')}
+                      className={`rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                        fontSize === 'small' ? selectedOptionClass : normalOptionClass
+                      }`}
+                    >
+                      Nhỏ
+                    </button>
+                    <button
+                      onClick={() => handleChangeFontSize('medium')}
+                      className={`rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                        fontSize === 'medium' ? selectedOptionClass : normalOptionClass
+                      }`}
+                    >
+                      Vừa
+                    </button>
+                    <button
+                      onClick={() => handleChangeFontSize('large')}
+                      className={`rounded-2xl border px-4 py-3 text-base font-bold transition ${
+                        fontSize === 'large' ? selectedOptionClass : normalOptionClass
+                      }`}
+                    >
+                      To
+                    </button>
+                  </div>
+                </div>
+
+                <div className={`rounded-3xl border p-4 ${subtleCardClass}`}>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-semibold">Giao diện</p>
+                      <p className={`mt-1 text-sm ${mutedText}`}>Chọn chế độ sáng hoặc tối cho khu vực khách hàng.</p>
+                    </div>
+                    <div className={`inline-flex rounded-2xl border p-1 ${
+                      isDarkMode ? 'border-white/10 bg-black/25' : 'border-gray-200 bg-white'
+                    }`}>
+                      <button
+                        type="button"
+                        onClick={() => setIsDarkMode(false)}
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
+                          !isDarkMode ? 'bg-[#da7756] text-white shadow-sm' : 'text-gray-400 hover:bg-white/10'
+                        }`}
+                      >
+                        <Sun size={16} /> Sáng
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsDarkMode(true)}
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
+                          isDarkMode ? 'bg-[#da7756] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <Moon size={16} /> Tối
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside className="space-y-6">
+            <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7e0d4] text-base font-bold text-gray-900">
+                  {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-bold">{user?.fullName || 'Người dùng MedBot'}</p>
+                  <p className={`truncate text-sm ${mutedText}`}>{user?.email || user?.phone || 'Tài khoản miễn phí'}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className={`rounded-3xl border p-6 shadow-sm ${
+              isDarkMode ? 'border-red-500/20 bg-red-500/10' : 'border-red-100 bg-red-50'
+            }`}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-red-500/10 text-red-600">
+                  <Trash2 size={20} />
+                </div>
+                <div>
+                  <h2 className="font-bold text-red-600">Vùng nguy hiểm</h2>
+                  <p className={`mt-1 text-sm leading-6 ${isDarkMode ? 'text-red-200/80' : 'text-red-700/80'}`}>
+                    Các hành động dưới đây không thể hoàn tác.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDeleteAllDialog(true)}
+                disabled={isDeletingAll}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-white px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Trash2 size={17} /> {isDeletingAll ? 'Đang xóa...' : 'Xóa tất cả lịch sử chat'}
+              </button>
+            </section>
+
+            <section className={`rounded-3xl border p-4 shadow-sm ${cardClass}`}>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className={`flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  isDarkMode ? 'bg-white/5 text-gray-100 hover:bg-white/10' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <LogOut size={17} /> {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất tài khoản'}
+              </button>
+            </section>
+          </aside>
+        </div>
+      </div>
+
+      <ConfirmDialog
+        open={showDeleteAllDialog}
+        title="Xóa tất cả lịch sử chat?"
+        description="Toàn bộ lịch sử khám và các tin nhắn đã lưu sẽ bị xóa khỏi tài khoản của bạn. Hành động này không thể hoàn tác."
+        confirmText="Xóa tất cả"
+        loading={isDeletingAll}
+        onCancel={() => {
+          if (!isDeletingAll) setShowDeleteAllDialog(false);
+        }}
+        onConfirm={handleDeleteAllChats}
+      />
     </div>
   );
 };

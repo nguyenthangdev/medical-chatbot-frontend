@@ -6,6 +6,7 @@ export default function DataTable({
     data,
     basePath = "",
     onDelete,
+    onToggle,
     actions = ["view", "edit", "delete"]
 }) {
     return (
@@ -49,13 +50,18 @@ export default function DataTable({
                                 <td className="py-3 px-4 text-center">
                                     <div className="flex justify-center gap-3">
                                         {actions?.includes("view") && (
-                                            <Link to={`${basePath}/${row._id || row.id}`} className="text-blue-500 hover:text-blue-700 hover:underline font-medium">Xem</Link>
+                                            <Link to={`${basePath}/${row._id || row.id}`} className="text-blue-500 hover:text-blue-700 hover:underline font-medium cursor-pointer">Xem</Link>
                                         )}
                                         {actions?.includes("edit") && (
-                                            <Link to={`${basePath}/${row._id || row.id}/edit`} className="text-green-500 hover:text-green-700 hover:underline font-medium">Sửa</Link>
+                                            <Link to={`${basePath}/${row._id || row.id}/edit`} className="text-green-500 hover:text-green-700 hover:underline font-medium cursor-pointer">Sửa</Link>
+                                        )}
+                                        {actions?.includes("toggle") && (
+                                            <button onClick={() => onToggle?.(row._id || row.id)} className="text-yellow-600 hover:text-yellow-800 hover:underline font-medium cursor-pointer">
+                                                {row.status === 'active' ? 'Hoạt động' : 'Ngừng hoạt động'}
+                                            </button>
                                         )}
                                         {actions?.includes("delete") && (
-                                            <button onClick={() => onDelete?.(row._id || row.id)} className="text-red-500 hover:text-red-700 hover:underline font-medium">Xóa</button>
+                                            <button onClick={() => onDelete?.(row._id || row.id)} className="text-red-500 hover:text-red-700 hover:underline font-medium cursor-pointer">Xóa</button>
                                         )}
                                     </div>
                                 </td>

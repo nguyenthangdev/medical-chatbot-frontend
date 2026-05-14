@@ -83,10 +83,10 @@ export default function SettingIndex() {
                 </div>
 
                 <section>
-                    <h3 className="text-lg font-semibold mb-4 text-blue-800">Thông số AI (AI Configuration)</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-blue-800">Thông số AI</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm mb-2 text-gray-600">Nhiệt độ (Temperature - Sáng tạo)</label>
+                            <label className="block text-sm mb-2 text-gray-600">Chỉ số sáng tạo (Temperature)</label>
                             <input
                                 type="number"
                                 step="0.1"

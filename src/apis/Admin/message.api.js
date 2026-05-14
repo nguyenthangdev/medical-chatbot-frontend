@@ -34,3 +34,8 @@ export const deleteMessageAPI = async (messageId) => {
   const response = await authorizedAxiosInstance.delete(`${API_ROOT}/api/admin/v1/messages/${messageId}`);
   return response.data;
 };
+
+export const toggleMessageStatusAPI = async (messageId) => {
+  const response = await authorizedAxiosInstance.put(`${API_ROOT}/api/admin/v1/messages/${messageId}/toggle`);
+  return response.data;
+}

@@ -45,6 +45,11 @@ export const speechToText = async (audioBlob) => {
   return response.data;
 }
 
+export const textToSpeech = async (text) => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/tts`, { text });
+  return response.data;
+}
+
 export const streamMessageFromAPI = async (conversationId, message, model, onChunk) => {
   const response = await fetch(`${API_ROOT}/api/v1/chat/message-stream`, {
     method: 'POST',

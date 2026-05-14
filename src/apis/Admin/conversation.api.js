@@ -20,3 +20,8 @@ export const deleteConversationAPI = async (conversationId) => {
   const response = await authorizedAxiosInstance.delete(`${API_ROOT}/api/admin/v1/conversations/${conversationId}`);
   return response.data;
 }
+
+export const toggleConversationStatusAPI = async (conversationId) => {
+  const response = await authorizedAxiosInstance.put(`${API_ROOT}/api/admin/v1/conversations/${conversationId}/toggle`);
+  return response.data;
+}

@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import DataTable from "../../../components/Admin/DataTable";
 import Pagination from "../../../components/Admin/Pagination";
-import { getConversationsAPI, deleteConversationAPI } from "../../../apis/Admin/conversation.api";
+import { getConversationsAPI, deleteConversationAPI, toggleConversationStatusAPI } from "../../../apis/Admin/conversation.api";
 
 export default function ConversationIndex() {
     const [conversations, setConversations] = useState([]);
@@ -84,6 +84,16 @@ export default function ConversationIndex() {
         }
     };
 
+    const handleToggle = async (id) => {
+        try {
+            await toggleConversationStatusAPI(id);
+            toast.success("Cập nhật trạng thái thành công!");
+            fetchConversations();
+        } catch (error) {
+            toast.error("Lỗi cập nhật trạng thái!");
+        }
+    };
+
     return (
         <div className="relative">
             <div className="flex justify-between items-center mb-6">
@@ -118,7 +128,8 @@ export default function ConversationIndex() {
                     data={conversations} 
                     basePath="/admin/conversations"
                     onDelete={confirmDelete}
-                    actions={["view", "delete"]}
+                    onToggle={handleToggle}
+                    actions={["view", "delete", "toggle"]}
                 />
 
                 <Pagination
