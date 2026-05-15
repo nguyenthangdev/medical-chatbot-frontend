@@ -36,14 +36,14 @@ const Pagination = ({ pagination, handlePagination, handlePaginationPrevious, ha
   return (
     <>
       {items && items.length > 0 && pagination && (
-        <nav className='flex items-center justify-between p-[10px] mt-4 border-t'>
-          <div className="text-sm text-gray-500">
+        <nav className='mt-4 flex flex-col gap-3 border-t border-slate-100 px-1 pt-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className="text-sm font-medium text-slate-500">
             Hiển thị {startIndex + 1} - {endIndex} trong tổng số {pagination.totalItems} bản ghi
           </div>
-          <ul className='flex items-center justify-center gap-[10px]'>
+          <ul className='flex items-center justify-start gap-2 sm:justify-center'>
             <li>
               <button
-                className="p-2 border rounded hover:bg-gray-100 disabled:opacity-50 transition"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={pagination.currentPage === 1}
                 onClick={() => handlePaginationPrevious(pagination.currentPage)}
               >
@@ -55,8 +55,8 @@ const Pagination = ({ pagination, handlePagination, handlePaginationPrevious, ha
                 <li key={index}>
                     <button
                     onClick={() => handlePagination(page)}
-                    className={`px-3 py-1 border rounded transition ${
-                        page === pagination.currentPage ? 'bg-blue-600 text-white' : 'hover:bg-gray-100 text-gray-700'}`
+                    className={`flex h-9 min-w-9 items-center justify-center rounded-xl border px-3 text-sm font-semibold transition ${
+                        page === pagination.currentPage ? 'border-sky-600 bg-sky-600 text-white shadow-sm' : 'border-slate-300 text-slate-600 hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700'}`
                     }
                     >
                     {page}
@@ -70,7 +70,7 @@ const Pagination = ({ pagination, handlePagination, handlePaginationPrevious, ha
             )}
             <li>
               <button
-                className="p-2 border rounded hover:bg-gray-100 disabled:opacity-50 transition"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-40"
                 disabled={pagination.currentPage === pagination.totalPage}
                 onClick={() => handlePaginationNext(pagination.currentPage)}
               >

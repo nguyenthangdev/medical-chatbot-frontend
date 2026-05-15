@@ -85,33 +85,33 @@ const SettingPage = () => {
     );
   }
 
-  const pageBg = isDarkMode ? 'bg-[#1f1f1f] text-gray-100' : 'bg-[#f7f8fb] text-gray-900';
+  const pageBg = isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-[#f5f9fc] text-slate-900';
   const cardClass = isDarkMode
-    ? 'bg-[#2b2b29] border-white/10 shadow-black/20'
-    : 'bg-white border-gray-200 shadow-gray-200/70';
+    ? 'bg-[#111827] border-white/10 shadow-black/20'
+    : 'bg-white border-sky-100 shadow-sky-100/70';
   const subtleCardClass = isDarkMode
     ? 'bg-white/5 border-white/10'
-    : 'bg-gray-50 border-gray-200';
-  const mutedText = isDarkMode ? 'text-gray-400' : 'text-gray-500';
+    : 'bg-sky-50/60 border-sky-100';
+  const mutedText = isDarkMode ? 'text-slate-400' : 'text-slate-500';
   const inputClass = isDarkMode
-    ? 'bg-white/5 border-white/10 text-gray-100 placeholder:text-gray-500 focus:border-[#da7756] focus:ring-[#da7756]/20'
-    : 'bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#da7756] focus:ring-[#da7756]/15';
-  const selectedOptionClass = 'border-[#da7756] bg-[#da7756]/10 text-[#c86143] ring-2 ring-[#da7756]/15';
+    ? 'bg-white/5 border-white/10 text-slate-100 placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/20'
+    : 'bg-white border-sky-100 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/15';
+  const selectedOptionClass = 'border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-500/15';
   const normalOptionClass = isDarkMode
-    ? 'border-white/10 text-gray-300 hover:border-white/25 hover:bg-white/5'
-    : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50';
+    ? 'border-white/10 text-slate-300 hover:border-white/25 hover:bg-white/5'
+    : 'border-sky-100 text-slate-600 hover:border-sky-200 hover:bg-white';
 
   return (
     <div className={`flex h-full flex-col overflow-y-auto ${pageBg}`}>
       <div className={`sticky top-0 z-10 border-b backdrop-blur-xl ${
-        isDarkMode ? 'border-white/10 bg-[#1f1f1f]/90' : 'border-gray-200 bg-white/85'
+        isDarkMode ? 'border-white/10 bg-[#0f172a]/90' : 'border-sky-100 bg-white/85'
       }`}>
         <div className="mx-auto flex w-full max-w-5xl items-center gap-4 px-5 py-5">
           <button
             type="button"
             onClick={() => navigate('/')}
             className={`flex h-11 w-11 items-center justify-center rounded-2xl transition ${
-              isDarkMode ? 'bg-white/5 text-gray-200 hover:bg-white/10' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              isDarkMode ? 'bg-white/5 text-slate-200 hover:bg-white/10' : 'bg-white text-slate-700 shadow-sm ring-1 ring-sky-100 hover:bg-sky-50 hover:text-blue-700'
             }`}
             aria-label="Quay lại"
           >
@@ -129,7 +129,7 @@ const SettingPage = () => {
           <div className="space-y-6">
             <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[#da7756]/12 text-[#da7756]">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                   <UserRound size={23} />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -166,7 +166,7 @@ const SettingPage = () => {
                 <button
                   onClick={handleUpdateProfile}
                   disabled={isSaving}
-                  className="inline-flex w-fit items-center justify-center gap-2 rounded-2xl bg-[#da7756] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#c96648] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex w-fit items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Save size={17} />
                   {isSaving ? 'Đang lưu...' : 'Lưu thông tin'}
@@ -176,7 +176,7 @@ const SettingPage = () => {
 
             <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[#da7756]/12 text-[#da7756]">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                   <MonitorCog size={23} />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -188,7 +188,7 @@ const SettingPage = () => {
               <div className="mt-6 space-y-5">
                 <div className={`rounded-3xl border p-4 ${subtleCardClass}`}>
                   <div className="mb-4 flex items-center gap-2">
-                    <Type size={18} className="text-[#da7756]" />
+                    <Type size={18} className="text-blue-600" />
                     <p className="font-semibold">Kích thước chữ trong đoạn chat</p>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -202,7 +202,7 @@ const SettingPage = () => {
                     </button>
                     <button
                       onClick={() => handleChangeFontSize('medium')}
-                      className={`rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                      className={`rounded-2xl border px-4 py-3 text-base font-bold transition ${
                         fontSize === 'medium' ? selectedOptionClass : normalOptionClass
                       }`}
                     >
@@ -210,7 +210,7 @@ const SettingPage = () => {
                     </button>
                     <button
                       onClick={() => handleChangeFontSize('large')}
-                      className={`rounded-2xl border px-4 py-3 text-base font-bold transition ${
+                      className={`rounded-2xl border px-4 py-3 text-lg font-bold transition ${
                         fontSize === 'large' ? selectedOptionClass : normalOptionClass
                       }`}
                     >
@@ -226,13 +226,13 @@ const SettingPage = () => {
                       <p className={`mt-1 text-sm ${mutedText}`}>Chọn chế độ sáng hoặc tối cho khu vực khách hàng.</p>
                     </div>
                     <div className={`inline-flex rounded-2xl border p-1 ${
-                      isDarkMode ? 'border-white/10 bg-black/25' : 'border-gray-200 bg-white'
+                      isDarkMode ? 'border-white/10 bg-black/25' : 'border-sky-100 bg-white'
                     }`}>
                       <button
                         type="button"
                         onClick={() => setIsDarkMode(false)}
                         className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
-                          !isDarkMode ? 'bg-[#da7756] text-white shadow-sm' : 'text-gray-400 hover:bg-white/10'
+                          !isDarkMode ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:bg-white/10'
                         }`}
                       >
                         <Sun size={16} /> Sáng
@@ -241,7 +241,7 @@ const SettingPage = () => {
                         type="button"
                         onClick={() => setIsDarkMode(true)}
                         className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${
-                          isDarkMode ? 'bg-[#da7756] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+                          isDarkMode ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-sky-50'
                         }`}
                       >
                         <Moon size={16} /> Tối
@@ -256,11 +256,11 @@ const SettingPage = () => {
           <aside className="space-y-6">
             <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#e7e0d4] text-base font-bold text-gray-900">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-base font-bold text-white">
                   {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate font-bold">{user?.fullName || 'Người dùng MedBot'}</p>
+                  <p className="truncate font-bold">{user?.fullName || 'Người dùng Bác sĩ Ảo'}</p>
                   <p className={`truncate text-sm ${mutedText}`}>{user?.email || user?.phone || 'Tài khoản miễn phí'}</p>
                 </div>
               </div>

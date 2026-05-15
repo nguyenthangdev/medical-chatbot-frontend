@@ -80,7 +80,7 @@ const ClientLayout = () => {
 
   return (
     <div className={`flex h-screen w-full overflow-hidden relative ${
-      isDarkMode ? 'bg-[#1f1f1f] text-gray-100' : 'bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-100 text-gray-800'
+      isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-[#f5f9fc] text-slate-800'
     }`}>
       {!isUpgradePage && (
       <div className="hidden md:block z-10 shadow-lg">
@@ -104,7 +104,7 @@ const ClientLayout = () => {
       )}
 
       {!isUpgradePage && (
-      <div className={`md:hidden fixed top-0 left-0 h-full w-[80%] max-w-[300px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div className={`md:hidden fixed top-0 left-0 h-full w-[82%] max-w-[320px] z-50 shadow-2xl transform transition-transform duration-300 ${isDarkMode ? 'bg-[#111827]' : 'bg-white'} ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <Sidebar 
           currentConversationId={id || conversationId}
           refreshTrigger={refreshSidebar}
@@ -113,7 +113,7 @@ const ClientLayout = () => {
           onNewChat={() => { handleNewChat(); setIsMobileMenuOpen(false); }}
           isDarkMode={isDarkMode}
         />
-        <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center bg-gray-100 text-gray-500 rounded-full hover:bg-red-100 hover:text-red-600">X</button>
+        <button onClick={() => setIsMobileMenuOpen(false)} className={`absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-2xl text-sm font-bold transition ${isDarkMode ? 'bg-white/10 text-slate-300 hover:bg-white/15' : 'bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600'}`}>X</button>
       </div>
       )}
       

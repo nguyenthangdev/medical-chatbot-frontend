@@ -36,10 +36,10 @@ import { AdminProviders } from './AppProviders';
 import UnauthorizedRoutesAdmin from './components/Admin/UnauthorizedRoutes';
 import PrivateRouteAdmin from './components/Admin/PrivateRoute';
 import Error404Page from './pages/404/Error404Page';
-import RoleIndex from "./pages/Admin/Role/RoleIndex"
+import RoleIndex from "./pages/Admin/Role/Index"
 import RoleForm from "./components/Admin/RoleForm"
 import PermissionIndex from "./pages/Admin/Permission/PermissionIndex"
-import RoleDetail from "./pages/Admin/Role/RoleDetail"
+import RoleDetail from "./pages/Admin/Role/Detail"
 
 function App() {
   const navigate = useNavigate();
@@ -131,7 +131,7 @@ function App() {
         </AdminProviders>
       }>
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/auth/register" element={<AdminRegister />} />
+        {/* <Route path="/admin/auth/register" element={<AdminRegister />} /> */}
       </Route>
       {/* --- HẾT NHÓM ADMIN --- */}
 

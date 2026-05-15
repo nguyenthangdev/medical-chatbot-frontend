@@ -45,8 +45,8 @@ export const speechToText = async (audioBlob) => {
   return response.data;
 }
 
-export const textToSpeech = async (text) => {
-  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/tts`, { text });
+export const textToSpeech = async (text, conversationId) => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/tts`, { text, conversationId });
   return response.data;
 }
 

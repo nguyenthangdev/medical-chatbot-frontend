@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+    Activity,
+    ArrowRight,
+    BrainCircuit,
+    CheckCircle2,
+    Eye,
+    EyeOff,
+    Loader2,
+    LockKeyhole,
+    Mail,
+    ShieldCheck,
+    Stethoscope
+} from "lucide-react";
 import { toast } from "react-toastify";
 import { loginAdminAPI } from "../../../apis/Admin/auth.api";
 import { useAuth } from "../../../contexts/Admin/AdminAuthContext";
@@ -45,130 +57,203 @@ export default function AdminLogin() {
     };
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center px-4 
-    bg-gradient-to-br from-blue-500 via-teal-400 to-green-400 
-    dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <main className="min-h-screen w-full overflow-hidden bg-[#f5f9fc] text-slate-900">
+            <div className="relative flex min-h-screen w-full items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(20,184,166,0.14),transparent_30%)]" />
+                <div className="absolute left-0 top-0 h-full w-full bg-[linear-gradient(90deg,rgba(226,239,248,0.68)_1px,transparent_1px),linear-gradient(180deg,rgba(226,239,248,0.68)_1px,transparent_1px)] bg-[size:44px_44px] opacity-60" />
 
-            <div className="w-full max-w-md backdrop-blur-lg bg-white/40 dark:bg-gray-800/60
-      border border-white/40 dark:border-gray-700
-      shadow-2xl rounded-2xl p-8 transition">
+                <section className="relative grid w-full max-w-6xl overflow-hidden rounded-[28px] border border-white/80 bg-white/90 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur xl:grid-cols-[1.08fr_0.92fr]">
+                    <div className="hidden min-h-[680px] flex-col justify-between bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-10 xl:flex">
+                        <div>
+                            <div className="inline-flex items-center gap-3 rounded-full border border-sky-200 bg-white/80 px-4 py-2 text-sm font-semibold text-sky-700 shadow-sm">
+                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                                    <Stethoscope size={17} />
+                                </span>
+                                Quản trị AI y tế
+                            </div>
 
-                <div className="flex flex-col items-center mb-6">
-                    <div className="w-16 h-16 bg-white dark:bg-gray-700 rounded-full flex items-center justify-center shadow-md mb-3 animate-pulse">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-8 h-8 text-green-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <path strokeLinecap="round" strokeLinejoin="round"
-                                d="M8 10h.01M16 10h.01M9 16h6
-                M12 2a10 10 0 00-7.07 17.07L3 22l2.93-1.93A10 10 0 1012 2z"
-                            />
-                        </svg>
-                    </div>
-
-                    <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">
-                        Medical Chatbot
-                    </h2>
-
-                    <p className="text-gray-600 dark:text-gray-400 text-sm">
-                        Đăng nhập Quản trị viên
-                    </p>
-                </div>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
-                    <div>
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            {...register("email", {
-                                required: "Vui lòng nhập email",
-                                pattern: {
-                                    value: /^\S+@\S+$/i,
-                                    message: "Email không hợp lệ"
-                                }
-                            })}
-                            className="w-full px-4 py-2 rounded-lg border border-gray-300
-              bg-white/80 text-gray-900 placeholder:text-gray-500
-              focus:outline-none focus:ring-2 focus:ring-blue-400
-              dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        />
-
-                        {errors.email && (
-                            <p className="text-red-500 text-xs mt-1">
-                                {errors.email.message}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <div className="relative">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Mật khẩu"
-                                {...register("password", {
-                                    required: "Vui lòng nhập mật khẩu"
-                                })}
-                                className="w-full px-4 py-3 pr-16
-                rounded-xl border border-gray-300
-                bg-white/80 text-gray-900
-                placeholder-gray-500
-                focus:outline-none focus:ring-2 focus:ring-blue-400
-                dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                            />
-
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-0 top-0 h-full px-5
-                flex items-center justify-center
-                bg-gray-900 dark:bg-gray-900
-                rounded-r-xl"
-                            >
-                                {showPassword ? (
-                                    <Eye size={20} className="text-gray-300" />
-                                ) : (
-                                    <EyeOff size={20} className="text-gray-300" />
-                                )}
-                            </button>
+                            <div className="mt-16 max-w-xl">
+                                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-600">
+                                    Medical Chatbot
+                                </p>
+                                <h1 className="mt-4 text-5xl font-semibold leading-tight text-slate-950">
+                                    Trung tâm quản trị cho nền tảng tư vấn y tế thông minh
+                                </h1>
+                                <p className="mt-5 max-w-lg text-base leading-8 text-slate-600">
+                                    Theo dõi người dùng, hội thoại và cấu hình hệ thống trong một giao diện sạch, bảo mật và dễ vận hành.
+                                </p>
+                            </div>
                         </div>
 
-                        {errors.password && (
-                            <p className="text-red-500 text-xs mt-1">
-                                {errors.password.message}
-                            </p>
-                        )}
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="rounded-2xl border border-sky-200 bg-white/78 p-4 shadow-sm">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                                    <BrainCircuit size={20} />
+                                </div>
+                                <p className="mt-5 text-2xl font-semibold text-slate-950">AI</p>
+                                <p className="mt-1 text-sm leading-6 text-slate-500">Quy trình trợ lý AI</p>
+                            </div>
+                            <div className="rounded-2xl border border-emerald-200 bg-white/78 p-4 shadow-sm">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                                    <Activity size={20} />
+                                </div>
+                                <p className="mt-5 text-2xl font-semibold text-slate-950">24/7</p>
+                                <p className="mt-1 text-sm leading-6 text-slate-500">Sẵn sàng giám sát</p>
+                            </div>
+                            <div className="rounded-2xl border border-blue-100 bg-white/78 p-4 shadow-sm">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                                    <ShieldCheck size={20} />
+                                </div>
+                                <p className="mt-5 text-2xl font-semibold text-slate-950">Bảo mật</p>
+                                <p className="mt-1 text-sm leading-6 text-slate-500">Truy cập quản trị</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={isLoading} 
-                        className={`w-full text-white font-semibold py-2.5 rounded-lg shadow-md transition ${
-                            isLoading 
-                            ? 'bg-blue-400 cursor-not-allowed' 
-                            : 'bg-blue-600 hover:bg-blue-700'
-                        }`}
-                    >
-                        {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
-                    </button>
+                    <div className="flex min-h-[680px] items-center justify-center px-5 py-8 sm:px-8 lg:px-12">
+                        <div className="w-full max-w-md">
+                            <div className="mb-8 flex items-center justify-between gap-4 xl:hidden">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                                        <Stethoscope size={22} />
+                                    </div>
+                                    <div>
+                                        <p className="text-base font-semibold text-slate-950">Medical Chatbot</p>
+                                        <p className="text-sm text-slate-500">Bảng quản trị</p>
+                                    </div>
+                                </div>
+                                <div className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                                    Bảo mật
+                                </div>
+                            </div>
 
-                </form>
+                            <div>
+                                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
+                                    <CheckCircle2 size={14} className="text-emerald-600" />
+                                    Chỉ dành cho nhân sự được cấp quyền
+                                </div>
+                                <h2 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                                    Đăng nhập quản trị
+                                </h2>
+                                <p className="mt-3 text-sm leading-6 text-slate-500">
+                                    Truy cập bảng điều khiển để quản lý dữ liệu hội thoại, người dùng và cấu hình nền tảng.
+                                </p>
+                            </div>
 
-                <p className="text-center text-sm text-gray-700 dark:text-gray-400 mt-6">
-                    Chưa có tài khoản?{" "}
-                    <Link
-                        to="/admin/register"
-                        className="text-blue-600 hover:underline font-medium"
-                    >
-                        Đăng ký ngay
-                    </Link>
-                </p>
+                            <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
+                                <div>
+                                    <label htmlFor="admin-email" className="mb-2 block text-sm font-semibold text-slate-700">
+                                        Email quản trị
+                                    </label>
+                                    <div className="relative">
+                                        <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={19} />
+                                        <input
+                                            id="admin-email"
+                                            type="email"
+                                            placeholder="admin@medicalchatbot.com"
+                                            aria-invalid={Boolean(errors.email)}
+                                            {...register("email", {
+                                                required: "Vui lòng nhập email",
+                                                pattern: {
+                                                    value: /^\S+@\S+$/i,
+                                                    message: "Email không hợp lệ"
+                                                }
+                                            })}
+                                            className={`h-13 w-full rounded-2xl border bg-white px-12 py-3 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-200 ${
+                                                errors.email ? "border-rose-300 bg-rose-50/40" : "border-slate-300 hover:border-slate-300"
+                                            }`}
+                                        />
+                                    </div>
 
+                                    {errors.email && (
+                                        <p className="mt-2 text-sm font-medium text-rose-600">
+                                            {errors.email.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label htmlFor="admin-password" className="mb-2 block text-sm font-semibold text-slate-700">
+                                        Mật khẩu
+                                    </label>
+                                    <div className="relative">
+                                        <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={19} />
+                                        <input
+                                            id="admin-password"
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="Nhập mật khẩu"
+                                            aria-invalid={Boolean(errors.password)}
+                                            {...register("password", {
+                                                required: "Vui lòng nhập mật khẩu"
+                                            })}
+                                            className={`h-13 w-full rounded-2xl border bg-white px-12 py-3 pr-14 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-200 ${
+                                                errors.password ? "border-rose-300 bg-rose-50/40" : "border-slate-300 hover:border-slate-300"
+                                            }`}
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-4 focus:ring-sky-200"
+                                            aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff size={20} />
+                                            ) : (
+                                                <Eye size={20} />
+                                            )}
+                                        </button>
+                                    </div>
+
+                                    {errors.password && (
+                                        <p className="mt-2 text-sm font-medium text-rose-600">
+                                            {errors.password.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className={`group flex h-13 w-full items-center justify-center gap-2 rounded-2xl px-5 text-base font-semibold text-white shadow-[0_14px_28px_rgba(2,132,199,0.24)] transition ${
+                                        isLoading
+                                            ? "cursor-not-allowed bg-sky-400"
+                                            : "bg-sky-600 hover:-translate-y-0.5 hover:bg-sky-700 hover:shadow-[0_18px_34px_rgba(2,132,199,0.28)] active:translate-y-0"
+                                    }`}
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 size={20} className="animate-spin" />
+                                            Đang xác thực...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Đăng nhập
+                                            <ArrowRight size={19} className="transition group-hover:translate-x-0.5" />
+                                        </>
+                                    )}
+                                </button>
+
+                                {isLoading && (
+                                    <div className="space-y-2 rounded-2xl border border-sky-200 bg-sky-50/70 p-4">
+                                        <div className="h-2.5 w-2/3 animate-pulse rounded-full bg-sky-200" />
+                                        <div className="h-2.5 w-5/6 animate-pulse rounded-full bg-sky-100" />
+                                    </div>
+                                )}
+                            </form>
+
+                            <div className="mt-8 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-4 text-center">
+                                <p className="text-sm font-medium text-slate-700">
+                                    Chưa có tài khoản quản trị?
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-slate-500">
+                                    Vui lòng liên hệ Quản trị viên để được cấp quyền truy cập.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
-        </div>
+        </main>
     );
 }

@@ -19,3 +19,159 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-blue-200 rounded-full;
 }
+
+/* Giao diện tối cho khu vực Admin */
+.admin-dark {
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.12), transparent 30%),
+    #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-dark main {
+  background: transparent;
+}
+
+.admin-dark [class*="bg-white"],
+.admin-dark [class*="bg-slate-50"],
+.admin-dark [class*="bg-gray-50"] {
+  background-color: #111827 !important;
+}
+
+.admin-dark [class*="bg-[#f4f8fb]"],
+.admin-dark [class*="bg-[#f5f9fc]"] {
+  background-color: #0f172a !important;
+}
+
+.admin-dark [class*="bg-sky-50"] {
+  background-color: rgba(12, 74, 110, 0.34) !important;
+}
+
+.admin-dark [class*="bg-emerald-50"] {
+  background-color: rgba(6, 78, 59, 0.34) !important;
+}
+
+.admin-dark [class*="bg-rose-50"] {
+  background-color: rgba(136, 19, 55, 0.28) !important;
+}
+
+.admin-dark [class*="bg-amber-50"] {
+  background-color: rgba(120, 53, 15, 0.28) !important;
+}
+
+.admin-dark [class*="bg-slate-100"],
+.admin-dark [class*="bg-gray-100"] {
+  background-color: #1e293b !important;
+}
+
+.admin-dark [class*="bg-slate-200"],
+.admin-dark [class*="bg-gray-200"] {
+  background-color: #334155 !important;
+}
+
+.admin-dark [class*="border-slate-300"],
+.admin-dark [class*="border-slate-200"],
+.admin-dark [class*="border-gray-100"],
+.admin-dark [class*="border-gray-200"] {
+  border-color: #334155 !important;
+}
+
+.admin-dark [class*="border-sky-200"] {
+  border-color: rgba(56, 189, 248, 0.42) !important;
+}
+
+.admin-dark [class*="border-emerald-200"] {
+  border-color: rgba(52, 211, 153, 0.42) !important;
+}
+
+.admin-dark [class*="border-rose-200"] {
+  border-color: rgba(251, 113, 133, 0.42) !important;
+}
+
+.admin-dark [class*="text-slate-950"],
+.admin-dark [class*="text-slate-900"],
+.admin-dark [class*="text-gray-900"],
+.admin-dark [class*="text-gray-800"] {
+  color: #f8fafc !important;
+}
+
+.admin-dark [class*="text-slate-800"],
+.admin-dark [class*="text-slate-700"],
+.admin-dark [class*="text-gray-700"] {
+  color: #dbeafe !important;
+}
+
+.admin-dark [class*="text-slate-600"],
+.admin-dark [class*="text-gray-600"] {
+  color: #cbd5e1 !important;
+}
+
+.admin-dark [class*="text-slate-500"],
+.admin-dark [class*="text-slate-400"],
+.admin-dark [class*="text-gray-500"],
+.admin-dark [class*="text-gray-400"] {
+  color: #94a3b8 !important;
+}
+
+.admin-dark input,
+.admin-dark select,
+.admin-dark textarea {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.admin-dark input::placeholder,
+.admin-dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+.admin-dark input[readonly],
+.admin-dark input:disabled,
+.admin-dark select:disabled,
+.admin-dark textarea:disabled {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+.admin-dark table {
+  background-color: #111827 !important;
+}
+
+.admin-dark thead tr {
+  background-color: #0f172a !important;
+}
+
+.admin-dark tbody tr:hover {
+  background-color: rgba(14, 165, 233, 0.12) !important;
+}
+
+.admin-dark [class*="shadow-sm"],
+.admin-dark [class*="shadow-md"],
+.admin-dark [class*="shadow-lg"],
+.admin-dark [class*="shadow-xl"],
+.admin-dark [class*="shadow-2xl"],
+.admin-dark [class*="shadow-["] {
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.34) !important;
+}
+
+.admin-dark .bg-white\/90,
+.admin-dark .bg-white\/95,
+.admin-dark .bg-white\/80,
+.admin-dark .bg-white\/70 {
+  background-color: rgba(17, 24, 39, 0.92) !important;
+}
+
+.admin-dark .admin-profile-menu-item,
+.admin-dark .admin-profile-menu-item:hover {
+  background-color: transparent !important;
+}
+
+.admin-dark .admin-profile-menu-item:hover {
+  color: #38bdf8 !important;
+}
+
+.admin-dark .admin-profile-menu-danger:hover {
+  color: #fb7185 !important;
+}

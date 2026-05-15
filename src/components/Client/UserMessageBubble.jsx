@@ -2,7 +2,7 @@ import formatTime from "../../helpers/formatTime"
 import { useState } from 'react';
 import { Edit2, Copy, RotateCcw, Check } from "lucide-react";
 
-const UserMessageBubble = ({ msg, onResend, isDarkMode = false }) => {
+const UserMessageBubble = ({ msg, onResend, isDarkMode = false, textSizeClass = 'text-base' }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(msg.content);
   const [copied, setCopied] = useState(false);
@@ -16,11 +16,11 @@ const UserMessageBubble = ({ msg, onResend, isDarkMode = false }) => {
 
   if (isEditing) {
     return (
-      <div className={`w-full md:max-w-[80%] border rounded-2xl p-3 shadow-sm ml-auto ${isDarkMode ? 'bg-[#2b2b29] border-white/10' : 'bg-white border-gray-300'}`}>
+      <div className={`w-full md:max-w-[80%] border rounded-2xl p-3 shadow-sm ml-auto ${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-sky-100'}`}>
         <textarea 
           value={editValue} 
           onChange={(e) => setEditValue(e.target.value)}
-          className={`w-full bg-transparent outline-none resize-none min-h-[80px] text-[15px] ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}
+          className={`w-full bg-transparent outline-none resize-none min-h-[80px] ${textSizeClass} ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}
           autoFocus
         />
         <div className={`flex justify-between items-center mt-2 border-t pt-2 ${isDarkMode ? 'border-white/10' : 'border-gray-200'}`}>
@@ -32,7 +32,7 @@ const UserMessageBubble = ({ msg, onResend, isDarkMode = false }) => {
                   onResend(editValue);
                   setIsEditing(false);
                 }} 
-                className="px-3 py-1.5 rounded-lg text-sm bg-black text-white hover:bg-gray-800 transition"
+                className="px-3 py-1.5 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-700 transition"
               >
                 Lưu & Gửi
               </button>
@@ -44,8 +44,8 @@ const UserMessageBubble = ({ msg, onResend, isDarkMode = false }) => {
 
   return (
     <div className="group flex flex-col items-end w-full">
-      <div className={`px-5 py-3 rounded-2xl text-[15px] leading-relaxed max-w-[85%] md:max-w-[80%] ${
-        isDarkMode ? 'bg-[#f4f4f4] text-gray-900' : 'bg-gray-100 text-gray-800'
+      <div className={`px-5 py-3 rounded-2xl ${textSizeClass} leading-relaxed max-w-[85%] md:max-w-[80%] shadow-sm ${
+        isDarkMode ? 'bg-sky-100 text-slate-950' : 'bg-blue-600 text-white'
       }`}>
         {msg.imageUrl && (
           <img src={msg.imageUrl} alt="Uploaded" className="max-w-full rounded-xl mb-2 border border-gray-200" style={{ maxHeight: '300px', objectFit: 'contain' }} />

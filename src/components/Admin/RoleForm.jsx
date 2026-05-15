@@ -1,79 +1,205 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { ArrowLeft, FileText, Hash, Loader2, Save, Shield, ShieldAlert } from "lucide-react";
 import { createRoleAPI, getRoleDetailAPI, updateRoleAPI } from "../../apis/Admin/role.api";
+import { useAuth } from "../../contexts/Admin/AdminAuthContext"; 
 
 export default function RoleForm() {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEdit = !!id;
 
-    const [formData, setFormData] = useState({ title: "", description: "", status: "active" });
-    const [loading, setLoading] = useState(false);
+    // SỬ DỤNG REACT HOOK FORM
+    const { register, handleSubmit, reset, formState: { errors } } = useForm({
+        defaultValues: {
+            title: "",
+            titleId: "",
+            description: "",
+            status: "active"
+        }
+    });
+
+    const [isFetchingDetail, setIsFetchingDetail] = useState(isEdit); // Chỉ loading nếu là form Sửa
+    const [isSaving, setIsSaving] = useState(false);
+
+    const { user: adminUser, isLoading: authLoading } = useAuth();
+
+    // 1. KIỂM TRA QUYỀN (Động: Tùy theo đang Tạo hay Sửa)
+    const requiredPermission = isEdit ? 'roles_edit' : 'roles_create';
+    const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes(requiredPermission);
 
     useEffect(() => {
-      if (isEdit) {
-        getRoleDetailAPI(id).then(res => {
-          // Đề phòng cố tình nhập URL id của Admin
-          if (res.isSystemAdmin) {
-            toast.error("Không thể chỉnh sửa Super Admin!");
-            navigate('/admin/roles');
-          } else {
-            setFormData(res);
-          }
-        }).catch(() => toast.error("Lỗi tải dữ liệu!"));
-      }
-    }, [id, isEdit, navigate]);
+        if (!authLoading && !hasPermission) {
+            const timer = setTimeout(() => navigate('/admin/roles'), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [authLoading, hasPermission, navigate]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+    // 2. LẤY DỮ LIỆU ĐỔ VÀO FORM NẾU LÀ TRANG SỬA
+    useEffect(() => {
+        if (authLoading || !hasPermission || !isEdit) return;
+
+        const fetchRoleDetail = async () => {
+            try {
+                const res = await getRoleDetailAPI(id);
+                if (res.isSystemAdmin) {
+                    toast.error("Không thể chỉnh sửa nhóm quyền hệ thống!");
+                    navigate('/admin/roles');
+                    return;
+                }
+                // Đổ dữ liệu vào react-hook-form
+                reset({
+                    title: res.title || "",
+                    titleId: res.titleId || "",
+                    description: res.description || "",
+                    status: res.status || "active"
+                });
+            } catch (error) {
+                toast.error("Lỗi tải dữ liệu nhóm quyền!");
+                navigate('/admin/roles');
+            } finally {
+                setIsFetchingDetail(false);
+            }
+        };
+
+        fetchRoleDetail();
+    }, [id, isEdit, reset, navigate, authLoading, hasPermission]);
+
+    // 3. XỬ LÝ SUBMIT FORM
+    const onSubmit = async (data) => {
+        setIsSaving(true);
         try {
             if (isEdit) {
-                await updateRoleAPI(id, formData);
-                toast.success("Cập nhật thành công!");
+                await updateRoleAPI(id, data);
+                toast.success("Cập nhật nhóm quyền thành công!");
             } else {
-                await createRoleAPI(formData);
-                toast.success("Tạo mới thành công!");
+                await createRoleAPI(data);
+                toast.success("Tạo nhóm quyền thành công!");
             }
             navigate("/admin/roles");
         } catch (error) {
-            toast.error(error.response?.data?.error || "Lỗi xử lý!");
+            toast.error(error.response?.data?.message || "Lỗi xử lý dữ liệu!");
         } finally {
-            setLoading(false);
+            setIsSaving(false);
         }
     };
 
+    // 4. HIỂN THỊ SPINNER
+    if (authLoading) {
+        return (
+            <div className="max-w-4xl rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
+                <div className="space-y-4">
+                    <div className="h-8 w-56 animate-pulse rounded-full bg-slate-100" />
+                    <div className="h-80 animate-pulse rounded-2xl bg-slate-100" />
+                </div>
+            </div>
+        );
+    }
+
+    // 5. CHẶN GIAO DIỆN
+    if (!hasPermission) {
+        return (
+            <div className="max-w-3xl rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
+                    <ShieldAlert size={26} />
+                </div>
+                <p className="mt-4 text-lg font-semibold text-slate-900">Bạn không có quyền thực hiện hành động này</p>
+                <p className="mt-2 text-sm text-slate-500">Hệ thống đang chuyển hướng về danh sách nhóm quyền.</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-2xl bg-white shadow rounded-lg p-6">
-            <h1 className="text-2xl font-bold mb-6">{isEdit ? "Chỉnh sửa Nhóm Quyền" : "Thêm mới Nhóm Quyền"}</h1>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+        <div className="max-w-4xl space-y-5">
+            <section className="rounded-[28px] border border-slate-300 bg-white p-6 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <Link to="/admin/roles" className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700" aria-label="Quay lại">
+                        <ArrowLeft size={18} />
+                    </Link>
                     <div>
-                        <label className="block font-medium mb-1">Tên nhóm quyền <span className="text-red-500">*</span></label>
-                        <input type="text" required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                        <label className="block font-medium mb-1">Mã định danh <span className="text-red-500">*</span></label>
-                        <input type="text" required value={formData.titleId} onChange={(e) => setFormData({...formData, titleId: e.target.value})} className="w-full border rounded-lg px-3 py-2" placeholder="vd: admin, content, support" />
+                        <p className="text-sm font-semibold text-sky-700">{isEdit ? "Cập nhật nhóm quyền" : "Tạo nhóm quyền"}</p>
+                        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
+                            {isEdit ? "Chỉnh sửa nhóm quyền" : "Thêm mới nhóm quyền"}
+                        </h1>
                     </div>
                 </div>
-                <div>
-                    <label className="block font-medium mb-1">Mô tả chi tiết</label>
-                    <textarea rows="4" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border rounded-lg px-3 py-2"></textarea>
+            </section>
+            
+            <form onSubmit={handleSubmit(onSubmit)} className="rounded-[28px] border border-slate-300 bg-white p-6 shadow-sm">
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Tên nhóm quyền <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                            <Shield className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input 
+                            type="text" 
+                            {...register("title", { required: "Vui lòng nhập tên nhóm quyền" })} 
+                                className={`h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-4 focus:ring-sky-200 ${errors.title ? 'border-rose-300' : 'border-slate-300 focus:border-sky-400'}`} 
+                            placeholder="vd: Quản trị viên"
+                        />
+                        </div>
+                        {errors.title && <p className="mt-2 text-sm font-medium text-rose-600">{errors.title.message}</p>}
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Mã định danh <span className="text-rose-500">*</span></label>
+                        <div className="relative">
+                            <Hash className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input 
+                            type="text" 
+                            {...register("titleId", { required: "Vui lòng nhập mã định danh" })} 
+                                className={`h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-4 focus:ring-sky-200 ${errors.titleId ? 'border-rose-300' : 'border-slate-300 focus:border-sky-400'}`} 
+                            placeholder="vd: admin, content, support" 
+                        />
+                        </div>
+                        {errors.titleId && <p className="mt-2 text-sm font-medium text-rose-600">{errors.titleId.message}</p>}
+                    </div>
                 </div>
+
+                <div className="mt-5">
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">Mô tả chi tiết</label>
+                    <div className="relative">
+                        <FileText className="pointer-events-none absolute left-4 top-4 text-slate-400" size={18} />
+                    <textarea 
+                        rows="4" 
+                        {...register("description")} 
+                            className="w-full resize-none rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-200"
+                        placeholder="Mô tả chức năng của nhóm quyền này..."
+                    ></textarea>
+                    </div>
+                </div>
+
                 {isEdit && (
-                    <div>
-                        <label className="block font-medium mb-1">Trạng thái</label>
-                        <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full border rounded-lg px-3 py-2">
+                    <div className="mt-5">
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Trạng thái</label>
+                        <select 
+                            {...register("status")} 
+                            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-200"
+                        >
                             <option value="active">Hoạt động</option>
                             <option value="inactive">Đã khóa</option>
                         </select>
                     </div>
                 )}
-                <div className="flex gap-3 pt-4 border-t">
-                    <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">{loading ? "Đang lưu..." : "Lưu dữ liệu"}</button>
-                    <Link to="/admin/roles" className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300">Hủy</Link>
+
+                <div className="mt-8 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row">
+                    <button 
+                        type="submit" 
+                        disabled={isSaving} 
+                        className={`inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-semibold text-white shadow-sm transition ${isSaving ? 'cursor-not-allowed bg-sky-400' : 'bg-sky-600 hover:bg-sky-700'}`}
+                    >
+                        {isSaving ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}
+                        {isSaving ? "Đang lưu..." : "Lưu dữ liệu"}
+                    </button>
+                    <Link 
+                        to="/admin/roles" 
+                        className="inline-flex h-12 items-center justify-center rounded-2xl bg-slate-100 px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                    >
+                        Hủy
+                    </Link>
                 </div>
             </form>
         </div>

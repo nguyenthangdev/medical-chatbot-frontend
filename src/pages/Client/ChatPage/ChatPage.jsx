@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useRef, useEffect } from 'react';
 import { IoSendSharp } from "react-icons/io5";
-import { AlertTriangle, Info, Plus, Mic, Sparkles } from "lucide-react"; // Thêm icon Plus
+import { AlertTriangle, Bot, Info, Menu, Mic, Paperclip, Sparkles, Stethoscope } from "lucide-react";
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { speechToText, textToSpeech } from '../../../apis/Client/chat.api';
 import SmoothTyping from "../../../components/Client/SmoothTyping"
@@ -28,6 +28,8 @@ const ChatPage = () => {
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const responseAudioRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const audioSourceRef = useRef(null);
   const audioChunksRef = useRef([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const fileInputRef = useRef(null);
@@ -72,6 +74,8 @@ const ChatPage = () => {
       mediaRecorderRef.current?.state === 'recording' && mediaRecorderRef.current.stop();
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
       responseAudioRef.current?.pause();
+      audioSourceRef.current?.disconnect();
+      audioContextRef.current?.close();
       window.speechSynthesis?.cancel();
     };
   }, []);
@@ -91,9 +95,9 @@ const ChatPage = () => {
   };
 
   const getTextSizeClass = () => {
-    if (fontSize === 'small') return 'text-base';
-    if (fontSize === 'large') return 'text-2xl';
-    return 'text-xl';
+    if (fontSize === 'small') return 'text-sm';
+    if (fontSize === 'large') return 'text-lg';
+    return 'text-base';
   };
 
   const getVoiceStatusText = () => {
@@ -108,8 +112,54 @@ const ChatPage = () => {
   const stopVoicePlayback = () => {
     responseAudioRef.current?.pause();
     responseAudioRef.current = null;
+    audioSourceRef.current?.disconnect();
+    audioSourceRef.current = null;
     window.speechSynthesis?.cancel();
     setVoiceState('idle');
+  };
+
+  const playBoostedAudio = (audioUrl, gainValue = 1.8) => {
+    return new Promise((resolve, reject) => {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const audio = new Audio(audioUrl);
+      audio.crossOrigin = 'anonymous';
+      responseAudioRef.current = audio;
+
+      if (!AudioContextClass) {
+        audio.volume = 1;
+        audio.onended = resolve;
+        audio.onerror = reject;
+        audio.play().catch(reject);
+        return;
+      }
+
+      const audioContext = audioContextRef.current || new AudioContextClass();
+      audioContextRef.current = audioContext;
+
+      const source = audioContext.createMediaElementSource(audio);
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = gainValue;
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      audioSourceRef.current = source;
+
+      audio.onended = () => {
+        source.disconnect();
+        gainNode.disconnect();
+        audioSourceRef.current = null;
+        resolve();
+      };
+      audio.onerror = (event) => {
+        source.disconnect();
+        gainNode.disconnect();
+        audioSourceRef.current = null;
+        reject(event);
+      };
+
+      audioContext.resume()
+        .then(() => audio.play())
+        .catch(reject);
+    });
   };
 
   const speakWithBrowser = (text) => {
@@ -130,21 +180,15 @@ const ChatPage = () => {
     });
   };
 
-  const playAssistantVoice = async (text) => {
+  const playAssistantVoice = async (text, targetConversationId) => {
     if (!text?.trim()) return;
 
     setVoiceState('speaking');
     try {
-      const res = await textToSpeech(text);
+      const res = await textToSpeech(text, targetConversationId);
       if (!res?.audio_url) throw new Error('Không có audio_url');
 
-      await new Promise((resolve, reject) => {
-        const audio = new Audio(res.audio_url);
-        responseAudioRef.current = audio;
-        audio.onended = resolve;
-        audio.onerror = reject;
-        audio.play().catch(reject);
-      });
+      await playBoostedAudio(res.audio_url);
     } catch (error) {
       await speakWithBrowser(text);
     } finally {
@@ -206,7 +250,7 @@ const ChatPage = () => {
              const chatResult = await sendMessage(text, selectedModel);
              const answer = chatResult?.response;
              if (answer && !answer.includes('Hết hạn mức')) {
-               await playAssistantVoice(answer);
+               await playAssistantVoice(answer, chatResult.conversationId);
              } else {
                setVoiceState('idle');
              }
@@ -250,9 +294,11 @@ const ChatPage = () => {
     <div className="w-full max-w-3xl flex flex-col items-center relative">
       
       {isLimitReached && (
-        <div className="w-full bg-[#1e1e1e] text-[#ececec] text-sm py-2.5 px-4 rounded-t-xl flex justify-between items-center mb-[-12px] shadow-md z-0 pb-4">
+        <div className={`w-full text-sm py-2.5 px-4 rounded-t-2xl flex justify-between items-center mb-[-12px] shadow-sm z-0 pb-4 ${
+          isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-900 text-white'
+        }`}>
           <span className="font-medium">Phiên này đã hết hạn sử dụng.</span>
-          <button onClick={() => window.location.reload()} className="text-gray-300 hover:text-white underline text-xs font-semibold">
+          <button onClick={() => window.location.reload()} className="text-slate-300 hover:text-white underline text-xs font-semibold">
             Bắt đầu mới
           </button>
         </div>
@@ -261,10 +307,10 @@ const ChatPage = () => {
       {(voiceState !== 'idle' || voiceError) && (
         <div className={`mb-3 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm shadow-sm ${
           voiceError
-            ? 'border-red-200 bg-red-50 text-red-700'
+            ? 'border-rose-200 bg-rose-50 text-rose-700'
             : isDarkMode
-              ? 'border-white/10 bg-white/5 text-gray-200'
-              : 'border-gray-200 bg-white text-gray-700'
+              ? 'border-white/10 bg-slate-900 text-slate-200'
+              : 'border-sky-100 bg-white text-slate-700'
         }`}>
           <span className="font-medium">{getVoiceStatusText()}</span>
           <button
@@ -276,10 +322,10 @@ const ChatPage = () => {
             }}
             className={`flex-shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
               voiceError
-                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
                 : isDarkMode
-                  ? 'bg-white/10 text-gray-100 hover:bg-white/15'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-white/10 text-slate-100 hover:bg-white/15'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
             {voiceState === 'recording' ? 'Gửi' : 'Dừng'}
@@ -289,14 +335,24 @@ const ChatPage = () => {
 
       <form 
         onSubmit={handleSend} 
-        className={`w-full flex flex-col rounded-2xl md:rounded-[24px] shadow-sm border p-2 z-10 transition-all duration-300 ${
-          isDarkMode ? 'bg-[#2b2b29] border-white/10' : 'bg-[#f4f4f4] border-gray-200'
+        className={`w-full flex flex-col rounded-3xl shadow-[0_18px_48px_rgba(15,92,150,0.10)] border p-2 z-10 transition-all duration-300 ${
+          isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-sky-100'
         } ${isLimitReached ? 'opacity-80' : ''}`}
       >
+        {selectedImage && (
+          <div className={`mx-2 mt-2 flex items-center justify-between rounded-2xl border px-3 py-2 text-sm ${
+            isDarkMode ? 'border-white/10 bg-white/5 text-slate-300' : 'border-sky-100 bg-sky-50 text-slate-600'
+          }`}>
+            <span className="truncate">Ảnh đã chọn: {selectedImage.name}</span>
+            <button type="button" onClick={() => setSelectedImage(null)} className="ml-3 font-semibold text-rose-500 hover:text-rose-600">
+              Xóa
+            </button>
+          </div>
+        )}
         <input 
           type="text" 
-          placeholder="Nhập tin nhắn..." 
-          className={`flex-1 bg-transparent px-3 pt-2 pb-6 text-base md:text-lg outline-none ${isLimitReached ? 'cursor-not-allowed text-gray-400' : isDarkMode ? 'text-gray-100 placeholder:text-gray-500' : 'text-gray-800'}`} 
+          placeholder="Mô tả triệu chứng hoặc đặt câu hỏi sức khỏe..." 
+          className={`flex-1 bg-transparent px-4 pt-3 pb-6 ${getTextSizeClass()} outline-none ${isLimitReached ? 'cursor-not-allowed text-slate-400' : isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-800 placeholder:text-slate-400'}`} 
           value={inputText} 
           onChange={(e) => setInputText(e.target.value)} 
           disabled={isRecording || isLimitReached} 
@@ -308,16 +364,16 @@ const ChatPage = () => {
           {/* Bên Trái: Các nút tiện ích (+, Mic) */}
           <div className="flex items-center gap-1">
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} disabled={isLimitReached}/>
-            <button type="button" onClick={handlePlusClick} disabled={isLimitReached} className={`p-2 transition rounded-full ${isDarkMode ? 'text-gray-400 hover:text-gray-100' : 'text-gray-400 hover:text-gray-700'}`}>
-               <Plus size={20} />
+            <button type="button" onClick={handlePlusClick} disabled={isLimitReached} className={`p-2 transition rounded-2xl ${isDarkMode ? 'text-slate-400 hover:bg-white/10 hover:text-slate-100' : 'text-slate-500 hover:bg-sky-50 hover:text-blue-700'}`} title="Đính kèm ảnh">
+               <Paperclip size={20} />
             </button>
             {!inputText.trim() && !selectedImage && (
               <button type="button" onClick={handleVoiceClick} disabled={isLimitReached || voiceState === 'transcribing' || voiceState === 'thinking'} className={`p-2 transition rounded-full ${
                 isRecording
-                  ? 'text-red-500 bg-red-100 animate-pulse'
+                  ? 'text-rose-600 bg-rose-100 animate-pulse'
                   : voiceState === 'speaking'
-                    ? 'text-[#da7756] bg-[#da7756]/10'
-                    : isDarkMode ? 'text-gray-400 hover:text-gray-100' : 'text-gray-400 hover:text-gray-700'
+                    ? 'text-blue-600 bg-blue-50'
+                    : isDarkMode ? 'text-slate-400 hover:bg-white/10 hover:text-slate-100' : 'text-slate-500 hover:bg-sky-50 hover:text-blue-700'
               }`}>
                 <Mic />
               </button>
@@ -331,19 +387,19 @@ const ChatPage = () => {
                  value={selectedModel} 
                  onChange={(e) => setSelectedModel(e.target.value)} 
                  disabled={isLimitReached}
-                 className={`appearance-none bg-transparent font-medium text-[13px] md:text-sm py-1.5 pl-3 pr-6 rounded-lg cursor-pointer outline-none transition ${isDarkMode ? 'text-gray-300 hover:bg-white/10' : 'text-gray-500 hover:bg-gray-200/50'}`}
+                 className={`appearance-none bg-transparent font-medium text-[13px] md:text-sm py-1.5 pl-3 pr-6 rounded-xl cursor-pointer outline-none transition ${isDarkMode ? 'text-slate-300 hover:bg-white/10' : 'text-slate-500 hover:bg-sky-50'}`}
                >
-                 <option className={isDarkMode ? 'bg-[#2b2b29] text-gray-100' : 'bg-white text-gray-800'} value="qwen">Qwen thích ứng</option>
-                 <option className={isDarkMode ? 'bg-[#2b2b29] text-gray-100' : 'bg-white text-gray-800'} value="gemini">Gemini Pro</option>
-                 <option className={isDarkMode ? 'bg-[#2b2b29] text-gray-100' : 'bg-white text-gray-800'} value="claude">Claude Sonnet</option>
+                 <option className={isDarkMode ? 'bg-[#111827] text-gray-100' : 'bg-white text-gray-800'} value="qwen">Mô hình Qwen</option>
+                 <option className={isDarkMode ? 'bg-[#111827] text-gray-100' : 'bg-white text-gray-800'} value="gemini">Mô hình Gemini</option>
+                 <option className={isDarkMode ? 'bg-[#111827] text-gray-100' : 'bg-white text-gray-800'} value="claude">Mô hình Claude</option>
                </select>
-               <span className="absolute right-2 top-[10px] text-gray-400 pointer-events-none text-xs">▼</span>
+               <span className="absolute right-2 top-[10px] text-slate-400 pointer-events-none text-xs">▼</span>
             </div>
 
             <button 
               type="submit" 
               disabled={isLimitReached || (!inputText.trim() && !selectedImage)}
-              className={`w-8 h-8 flex items-center justify-center rounded-full transition duration-300 ${(!inputText.trim() && !selectedImage) || isLimitReached ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800 shadow-md'}`}
+              className={`w-9 h-9 flex items-center justify-center rounded-2xl transition duration-300 ${(!inputText.trim() && !selectedImage) || isLimitReached ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-600/20'}`}
             >
               <IoSendSharp size={16} />
             </button>
@@ -351,18 +407,20 @@ const ChatPage = () => {
 
         </div>
       </form>
-      <div className={`text-center mt-2 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+      <div className={`text-center mt-2 text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
         Bác sĩ Ảo có thể mắc sai lầm. Vui lòng kiểm tra lại thông tin.
       </div>
     </div>
   );
 
   return (
-    <div className={`flex flex-col h-full relative ${isDarkMode ? 'bg-[#1f1f1f] text-gray-100' : 'bg-[#f9f9f9] text-gray-800'}`}>
+    <div className={`flex flex-col h-full relative ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-[#f5f9fc] text-slate-800'}`}>
       
-      <header className={`md:hidden border-b p-4 flex items-center justify-between shadow-sm z-20 ${isDarkMode ? 'bg-[#252522] border-white/10 text-gray-100' : 'bg-white border-gray-200 text-gray-800'}`}>
-        <h1 className="text-xl font-bold flex items-center gap-2">Bác sĩ Ảo</h1>
-        <button onClick={() => setIsMobileMenuOpen(true)} className="text-2xl p-2 rounded-lg">☰</button>
+      <header className={`md:hidden border-b p-4 flex items-center justify-between shadow-sm z-20 ${isDarkMode ? 'bg-[#111827] border-white/10 text-slate-100' : 'bg-white border-sky-100 text-slate-800'}`}>
+        <h1 className="text-xl font-bold flex items-center gap-2"><Stethoscope size={22} className="text-blue-500" /> Bác sĩ Ảo</h1>
+        <button onClick={() => setIsMobileMenuOpen(true)} className={`p-2 rounded-2xl ${isDarkMode ? 'hover:bg-white/10' : 'hover:bg-sky-50'}`} aria-label="Mở menu">
+          <Menu size={24} />
+        </button>
       </header>
 
       {isNewChat && (
@@ -370,7 +428,7 @@ const ChatPage = () => {
           type="button"
           onClick={() => navigate('/upgrade')}
           className={`absolute left-1/2 top-20 z-20 flex -translate-x-1/2 items-center gap-1 rounded-xl px-3 py-1.5 text-sm font-medium shadow-sm ring-1 transition md:top-5 ${
-            isDarkMode ? 'bg-[#2b2b29] text-gray-300 ring-white/10 hover:bg-white/10 hover:text-white' : 'bg-white text-gray-600 ring-gray-200 hover:bg-gray-50 hover:text-gray-900'
+            isDarkMode ? 'bg-slate-900 text-slate-300 ring-white/10 hover:bg-white/10 hover:text-white' : 'bg-white text-slate-600 ring-sky-100 hover:bg-sky-50 hover:text-blue-700'
           }`}
         >
           <span>Gói miễn phí</span>
@@ -381,11 +439,16 @@ const ChatPage = () => {
 
       {isNewChat ? (
         <div className="flex flex-1 flex-col items-center justify-center px-4 pb-24">
-          <div className="mb-8 flex items-center gap-3 text-center">
-            <Sparkles className="h-9 w-9 text-[#da7756]" />
-            <h1 className="text-3xl font-semibold md:text-4xl">
+          <div className="mb-8 flex max-w-3xl flex-col items-center gap-4 text-center">
+            <div className={`flex h-16 w-16 items-center justify-center rounded-3xl shadow-sm ${isDarkMode ? 'bg-sky-500/15 text-sky-300' : 'bg-sky-50 text-blue-600'}`}>
+              <Sparkles className="h-8 w-8" />
+            </div>
+            <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
               {getGreeting()}
             </h1>
+            <p className={`max-w-xl text-base leading-7 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              Mô tả triệu chứng, đặt câu hỏi về sức khỏe hoặc dùng micro để bắt đầu trao đổi.
+            </p>
           </div>
           {renderComposer()}
         </div>
@@ -398,28 +461,28 @@ const ChatPage = () => {
           <div key={msg._id || msg.id || index} className={`flex gap-4 max-w-3xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             
             {msg.role === 'assistant' && (
-              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#da7756] text-white shadow-sm font-semibold">
-                AI
+              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm font-semibold">
+                <Bot size={20} />
               </div>
             )}
 
             {/* TIN NHẮN CỦA USER LÀM KIỂU MỚI BÊN TRÊN */}
             {msg.role === 'user' ? (
-              <UserMessageBubble msg={msg} onResend={handleResend} isDarkMode={isDarkMode} />
+              <UserMessageBubble msg={msg} onResend={handleResend} isDarkMode={isDarkMode} textSizeClass={getTextSizeClass()} />
             ) : (
               /* TIN NHẮN CỦA AI */
               <div className="py-2 max-w-[85%] md:max-w-[85%] w-full">
                 
                 {msg.content && (
-                   <ExpandableMarkdown content={msg.content} isStreaming={loading && msg.isNew} isDarkMode={isDarkMode} />
+                   <ExpandableMarkdown content={msg.content} isStreaming={loading && msg.isNew} isDarkMode={isDarkMode} textSizeClass={getTextSizeClass()} />
                 )}
 
                 {/* CÁC THÀNH PHẦN PHỤ CỦA AI */}
                 <div className="mt-3 flex flex-col gap-2">
                   
                   {msg.risk_level === 'high' && (
-                     <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm flex gap-2 items-start shadow-sm mt-2">
-                        <AlertTriangle size={18} className="mt-0.5 shrink-0 text-red-500"/>
+                     <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-sm flex gap-2 items-start shadow-sm mt-2">
+                        <AlertTriangle size={18} className="mt-0.5 shrink-0 text-rose-500"/>
                         <div>
                            <strong className="block mb-1">Cảnh báo y tế:</strong> 
                            Triệu chứng có thể nguy hiểm. Đề nghị đến cơ sở y tế gần nhất hoặc gọi cấp cứu ngay lập tức!
@@ -450,7 +513,7 @@ const ChatPage = () => {
       </div>
       
       {/* KHU VỰC FORM NHẬP TEXT */}
-      <div className={`p-4 md:p-6 w-full flex justify-center z-10 ${isDarkMode ? 'bg-gradient-to-t from-[#1f1f1f] to-transparent' : 'bg-gradient-to-t from-[#f9f9f9] to-transparent'}`}>
+      <div className={`p-4 md:p-6 w-full flex justify-center z-10 ${isDarkMode ? 'bg-gradient-to-t from-[#0f172a] to-transparent' : 'bg-gradient-to-t from-[#f5f9fc] to-transparent'}`}>
         {renderComposer()}
       </div>
       </>

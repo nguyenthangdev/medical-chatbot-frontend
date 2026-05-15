@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ExternalLink,
   FileText,
+  Loader2,
   LogOut,
   MessageSquarePlus,
   MoreVertical,
@@ -17,6 +18,7 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  X,
 } from 'lucide-react';
 import { getConversations, deleteConversationAPI, renameConversationAPI } from '../../apis/Client/chat.api';
 import { toast } from 'react-toastify';
@@ -40,11 +42,15 @@ const Sidebar = ({
   const [searchText, setSearchText] = useState('');
   const [openMenuId, setOpenMenuId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [renameTarget, setRenameTarget] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const menuRef = useRef(null);
   const accountMenuRef = useRef(null);
+  const renameInputRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -72,6 +78,15 @@ const Sidebar = ({
     };
     fetchConversations();
   }, [user, refreshTrigger]);
+
+  useEffect(() => {
+    if (!renameTarget) return;
+    const frameId = requestAnimationFrame(() => {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [renameTarget]);
 
   const filtered = conversations?.filter((c) =>
     c.title?.toLowerCase().includes(searchText.toLowerCase())
@@ -145,22 +160,51 @@ const Sidebar = ({
     }
   };
 
-  const handleRename = async (e, id, currentTitle) => {
+  const handleRename = (e, conversation) => {
     e.stopPropagation();
     setOpenMenuId(null);
-    const newTitle = prompt('Nhập tên mới cho cuộc hội thoại:', currentTitle);
-    if (newTitle && newTitle.trim() !== currentTitle) {
-      try {
-        const res = await renameConversationAPI(id, newTitle);
-        if (res.code === 200) {
-          toast.success(res.message || 'Đã đổi tên thành công');
-          onRefreshSidebar();
-        } else {
-          toast.error(res.message);
-        }
-      } catch (err) {
-        toast.error('Đổi tên thất bại');
+    setRenameTarget(conversation);
+    setRenameValue(conversation?.title || 'Cuộc hội thoại mới');
+  };
+
+  const closeRenameDialog = () => {
+    if (isRenaming) return;
+    setRenameTarget(null);
+    setRenameValue('');
+  };
+
+  const confirmRenameConversation = async (event) => {
+    event?.preventDefault();
+    if (!renameTarget?._id) return;
+
+    const nextTitle = renameValue.trim();
+    const currentTitle = renameTarget.title || 'Cuộc hội thoại mới';
+
+    if (!nextTitle) {
+      toast.error('Vui lòng nhập tên hội thoại.');
+      return;
+    }
+
+    if (nextTitle === currentTitle) {
+      closeRenameDialog();
+      return;
+    }
+
+    setIsRenaming(true);
+    try {
+      const res = await renameConversationAPI(renameTarget._id, nextTitle);
+      if (res.code === 200) {
+        toast.success(res.message || 'Đã đổi tên thành công');
+        onRefreshSidebar();
+        setRenameTarget(null);
+        setRenameValue('');
+      } else {
+        toast.error(res.message);
       }
+    } catch (err) {
+      toast.error('Đổi tên thất bại');
+    } finally {
+      setIsRenaming(false);
     }
   };
 
@@ -176,11 +220,11 @@ const Sidebar = ({
   };
 
   const shellClass = isDarkMode
-    ? 'bg-[#1f1f1f] border-white/10 text-gray-100'
-    : 'bg-[#f7f7f5] border-gray-200 text-gray-800';
-  const mutedText = isDarkMode ? 'text-gray-400' : 'text-gray-500';
-  const hoverItem = isDarkMode ? 'hover:bg-white/10' : 'hover:bg-gray-200/60';
-  const activeItem = isDarkMode ? 'bg-white/10' : 'bg-gray-200/70';
+    ? 'bg-[#111827] border-white/10 text-slate-100'
+    : 'bg-white border-sky-100 text-slate-800';
+  const mutedText = isDarkMode ? 'text-slate-400' : 'text-slate-500';
+  const hoverItem = isDarkMode ? 'hover:bg-white/10' : 'hover:bg-sky-50';
+  const activeItem = isDarkMode ? 'bg-sky-500/15 text-sky-100' : 'bg-sky-50 text-blue-700';
 
   if (collapsed) {
     return (
@@ -197,7 +241,7 @@ const Sidebar = ({
         <button
           type="button"
           onClick={handleNewChat}
-          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#da7756] text-white shadow-sm transition hover:bg-[#c96648]"
+          className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm transition hover:bg-blue-700"
           title="Bắt đầu khám mới"
         >
           <MessageSquarePlus size={20} />
@@ -215,7 +259,7 @@ const Sidebar = ({
           <button
             type="button"
             onClick={onToggleCollapsed}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-gray-700 to-black text-sm font-bold text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-sm font-bold text-white"
             title={user?.fullName || 'Tài khoản'}
           >
             {userInitial}
@@ -233,8 +277,8 @@ const Sidebar = ({
           onClick={handleNewChat}
           className={`flex min-w-0 items-center gap-2 rounded-xl px-2 py-2 text-left font-bold ${hoverItem}`}
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#da7756] text-sm text-white">M</span>
-          <span className="truncate text-lg">MedBot</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-sm text-white">AI</span>
+          <span className="truncate text-lg">Bác sĩ Ảo</span>
         </button>
         <button
           type="button"
@@ -251,7 +295,7 @@ const Sidebar = ({
         className={`w-full border font-semibold py-3 px-3 rounded-xl flex items-center gap-2 transition-all shadow-sm ${
           isDarkMode
             ? 'border-white/10 bg-white/5 hover:bg-white/10'
-            : 'border-gray-200 bg-white hover:bg-gray-50'
+            : 'border-sky-100 bg-sky-50 text-blue-700 hover:bg-sky-100'
         }`}
       >
         <MessageSquarePlus size={18} />
@@ -267,7 +311,7 @@ const Sidebar = ({
           onChange={(e) => setSearchText(e.target.value)}
           className={`w-full border rounded-xl py-2 pl-9 pr-3 text-sm outline-none transition-colors ${
             isDarkMode
-              ? 'bg-white/5 border-white/10 text-gray-100 placeholder:text-gray-500 focus:border-[#da7756]'
+              ? 'bg-white/5 border-white/10 text-gray-100 placeholder:text-gray-500 focus:border-sky-400'
               : 'bg-white border-gray-200 text-gray-800 focus:border-blue-400'
           }`}
         />
@@ -304,11 +348,11 @@ const Sidebar = ({
                       </button>
 
                       {openMenuId === conv._id && (
-                        <div ref={menuRef} className="absolute right-4 top-8 w-40 bg-[#2d2d2d] text-[#ececec] rounded-xl shadow-xl border border-gray-700 z-50 py-1 overflow-hidden">
-                          <button onClick={(e) => handleRename(e, conv._id, conv.title)} className="w-full px-4 py-2 text-sm text-left flex items-center gap-2 hover:bg-[#3d3d3d] transition">
+                        <div ref={menuRef} className={`absolute right-4 top-8 w-40 rounded-xl shadow-xl border z-50 py-1 overflow-hidden ${isDarkMode ? 'bg-slate-800 text-slate-100 border-white/10' : 'bg-white text-slate-700 border-slate-200'}`}>
+                          <button onClick={(e) => handleRename(e, conv)} className={`w-full px-4 py-2 text-sm text-left flex items-center gap-2 transition ${hoverItem}`}>
                             <Pencil size={14} /> Đổi tên
                           </button>
-                          <button onClick={(e) => handleDelete(e, conv)} className="w-full px-4 py-2 text-sm text-left flex items-center gap-2 hover:bg-[#3d3d3d] text-red-400 hover:text-red-300 transition">
+                          <button onClick={(e) => handleDelete(e, conv)} className="w-full px-4 py-2 text-sm text-left flex items-center gap-2 text-rose-500 hover:bg-rose-50 transition">
                             <Trash2 size={14} /> Xóa
                           </button>
                         </div>
@@ -328,7 +372,7 @@ const Sidebar = ({
             isDarkMode ? 'border-white/10 bg-[#32322f] text-gray-100' : 'border-gray-200 bg-white text-gray-800'
           }`}>
             <div className={`truncate px-3 py-2 text-sm ${mutedText}`}>
-              {user?.email || user?.phone || 'Tài khoản MedBot'}
+              {user?.email || user?.phone || 'Tài khoản Bác sĩ Ảo'}
             </div>
 
             <button onClick={() => goTo('/settings')} className={`w-full rounded-xl px-3 py-2 text-left text-sm flex items-center gap-3 ${hoverItem}`}>
@@ -378,7 +422,7 @@ const Sidebar = ({
             accountMenuOpen ? activeItem : hoverItem
           }`}
         >
-          <div className="w-10 h-10 rounded-full bg-[#e7e0d4] text-gray-800 flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
             {userInitial}
           </div>
           <div className="flex-1 flex flex-col items-start overflow-hidden">
@@ -402,6 +446,96 @@ const Sidebar = ({
         }}
         onConfirm={confirmDeleteConversation}
       />
+
+      {renameTarget && (
+        <div
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
+          onMouseDown={closeRenameDialog}
+        >
+          <form
+            onSubmit={confirmRenameConversation}
+            onMouseDown={(event) => event.stopPropagation()}
+            className={`w-full max-w-[440px] rounded-3xl border p-5 shadow-2xl ${
+              isDarkMode ? 'border-white/10 bg-slate-900 text-slate-100' : 'border-sky-100 bg-white text-slate-900'
+            }`}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${
+                  isDarkMode ? 'bg-sky-500/15 text-sky-300' : 'bg-sky-50 text-blue-600'
+                }`}>
+                  <Pencil size={21} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold">Đổi tên hội thoại</h2>
+                  <p className={`mt-1 text-sm leading-6 ${mutedText}`}>
+                    Đặt tên ngắn gọn để bạn dễ tìm lại lịch sử khám sau này.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeRenameDialog}
+                disabled={isRenaming}
+                className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  isDarkMode ? 'text-slate-400 hover:bg-white/10 hover:text-slate-100' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                }`}
+                aria-label="Đóng"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-5">
+              <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                Tên hội thoại
+              </label>
+              <input
+                ref={renameInputRef}
+                type="text"
+                value={renameValue}
+                onChange={(event) => setRenameValue(event.target.value)}
+                maxLength={80}
+                disabled={isRenaming}
+                className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ring-4 ring-transparent transition disabled:cursor-not-allowed disabled:opacity-70 ${
+                  isDarkMode
+                    ? 'border-white/10 bg-white/5 text-slate-100 placeholder:text-slate-500 focus:border-sky-400 focus:ring-sky-400/15'
+                    : 'border-sky-100 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/10'
+                }`}
+                placeholder="Ví dụ: Tư vấn đau họng"
+              />
+              <div className={`mt-2 flex items-center justify-between text-xs ${mutedText}`}>
+                <span>Tối đa 80 ký tự.</span>
+                <span>{renameValue.length}/80</span>
+              </div>
+            </div>
+
+            <div className={`mt-5 flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end ${
+              isDarkMode ? 'border-white/10' : 'border-slate-100'
+            }`}>
+              <button
+                type="button"
+                onClick={closeRenameDialog}
+                disabled={isRenaming}
+                className={`rounded-2xl border px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  isDarkMode ? 'border-white/10 text-slate-200 hover:bg-white/10' : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={isRenaming}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isRenaming && <Loader2 size={16} className="animate-spin" />}
+                {isRenaming ? 'Đang lưu...' : 'Lưu tên'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

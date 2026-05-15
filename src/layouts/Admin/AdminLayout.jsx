@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Header from "../../components/Admin/Header";
 import Sidebar from "../../components/Admin/Sidebar";
@@ -7,6 +7,16 @@ export default function AdminLayout() {
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
+    const [theme, setTheme] = useState(() => {
+        if (typeof window === "undefined") return "light";
+        return localStorage.getItem("admin-theme") || "light";
+    });
+
+    const isDarkMode = theme === "dark";
+
+    useEffect(() => {
+        localStorage.setItem("admin-theme", theme);
+    }, [theme]);
 
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
@@ -16,35 +26,43 @@ export default function AdminLayout() {
         setCollapsed(!collapsed);
     };
 
-    return (
-        <div className="flex h-screen bg-gray-100">
+    const toggleTheme = () => {
+        setTheme((currentTheme) => currentTheme === "dark" ? "light" : "dark");
+    };
 
-            {/* Mobile overlay */}
+    return (
+        <div className={`admin-shell flex h-screen overflow-hidden bg-[#f4f8fb] text-slate-900 ${isDarkMode ? "admin-dark" : "admin-light"}`}>
+
+            {/* Lớp phủ trên mobile */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/40 z-30 md:hidden"
+                    className="fixed inset-0 z-30 bg-slate-950/35 backdrop-blur-[2px] md:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
-            {/* Sidebar */}
+            {/* Thanh điều hướng */}
             <Sidebar
                 open={sidebarOpen}
                 collapsed={collapsed}
                 toggleCollapse={toggleCollapse}
             />
 
-            {/* Main area */}
-            <div className="flex flex-col flex-1 overflow-hidden">
+            {/* Khu vực nội dung chính */}
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
 
-                {/* Header */}
-                <Header toggleSidebar={toggleSidebar} />
+                {/* Thanh trên cùng */}
+                <Header
+                    toggleSidebar={toggleSidebar}
+                    isDarkMode={isDarkMode}
+                    toggleTheme={toggleTheme}
+                />
 
-                {/* Page content */}
-                <main className="flex-1 overflow-y-auto p-6">
+                {/* Nội dung trang */}
+                <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
 
                     {/* Container giống SaaS layout */}
-                    <div className="w-full px-2">
+                    <div className="mx-auto w-full max-w-7xl">
 
                         <Outlet />
 

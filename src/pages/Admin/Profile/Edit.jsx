@@ -1,7 +1,18 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import {
+    ArrowLeft,
+    Camera,
+    Loader2,
+    LockKeyhole,
+    Mail,
+    Save,
+    ShieldCheck,
+    UserRound
+} from "lucide-react";
 import { useAuth } from "../../../contexts/Admin/AdminAuthContext.jsx";
 import { updateMyProfileAPI } from "../../../apis/Admin/myProfile.api";
 import { uploadImageAPI } from "../../../apis/General/upload.api.js";
@@ -12,8 +23,6 @@ export default function ProfileEdit() {
     const { refreshUser, user, isLoading } = useAuth();
     
     const [isSaving, setIsSaving] = useState(false); 
-    
-    // Quản lý ảnh
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const fileInputRef = useRef();
@@ -24,7 +33,7 @@ export default function ProfileEdit() {
                 name: user.fullName || user.name,
                 email: user.email,
             });
-            setAvatarPreview(user.avatar); // Set ảnh cũ
+            setAvatarPreview(user.avatar);
         }
     }, [user, reset]);
 
@@ -39,19 +48,16 @@ export default function ProfileEdit() {
     const onSubmit = async (data) => {
         setIsSaving(true);
         try {
-            // 1. Chuẩn bị payload JSON thuần túy
             let payload = {
                 fullName: data.name
             };
 
-            // 2. Nếu user có chọn ảnh mới -> GỌI API UPLOAD TRƯỚC
             if (selectedFile) {
                 toast.info("Đang tải ảnh lên hệ thống...");
                 const uploadRes = await uploadImageAPI(selectedFile);
-                payload.avatar = uploadRes.url; // Gắn cái link lấy được từ Cloudinary vào payload
+                payload.avatar = uploadRes.url; 
             }
 
-            // 3. Gọi API cập nhật profile với payload dạng JSON thuần ({ fullName, avatar })
             await updateMyProfileAPI(payload);
             await refreshUser();
             
@@ -65,104 +71,175 @@ export default function ProfileEdit() {
         }
     };
 
-    if (isLoading || !user) return <div className="p-8 text-center">Đang tải...</div>;
+    if (isLoading || !user) {
+        return (
+            <div className="max-w-5xl rounded-3xl border border-slate-300 bg-white p-8 shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+                <div className="space-y-4">
+                    <div className="h-8 w-56 animate-pulse rounded-full bg-slate-100" />
+                    <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
+                    <div className="h-64 animate-pulse rounded-2xl bg-slate-100" />
+                </div>
+            </div>
+        );
+    }
+
+    const avatarLetter = (user.fullName || user.name || "A").charAt(0).toUpperCase();
 
     return (
-        <div className="max-w-2xl bg-white shadow-md rounded-xl p-6 text-gray-800 transition-all duration-300 animate-fade-in-up">
-
-            <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="text-gray-500 hover:text-blue-600 transition flex items-center gap-1 font-medium"
-                >
-                    &larr; Quay lại
-                </button>
-                <h2 className="text-2xl font-semibold">
-                    Chỉnh sửa thông tin
-                </h2>
-            </div>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
-                <div className="flex flex-col items-center gap-4 mb-6">
-                    <div className="relative group">
-                        <img 
-                            src={avatarPreview || "/default-avatar.png"} 
-                            alt="Avatar" 
-                            className="w-32 h-32 rounded-full object-cover border-4 border-blue-50"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => fileInputRef.current.click()}
-                            className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-medium"
-                        >
-                            Đổi ảnh
-                        </button>
-                    </div>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={handleFileChange} 
-                        className="hidden" 
-                        accept="image/*"
-                    />
-                </div>
-                
-                <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Họ và tên <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        {...register("name", { required: "Vui lòng nhập họ tên" })}
-                        className="w-full px-4 py-2.5 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition outline-none"
-                        placeholder="Nhập họ và tên..."
-                    />
-                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700">
-                        Email
-                    </label>
-                    <input
-                        type="email"
-                        {...register("email")}
-                        readOnly
-                        className="w-full px-4 py-2.5 border rounded-lg border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed select-none outline-none"
-                    />
-                    <p className="text-xs text-orange-500 mt-1.5 flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                        </svg>
-                        Email không thể thay đổi vì lý do bảo mật.
-                    </p>
-                </div>
-
-                <div className="flex gap-4 pt-6 mt-2">
+        <div className="max-w-5xl space-y-5">
+            <section className="rounded-[28px] border border-slate-300 bg-white p-6 shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+                <div className="flex items-center gap-3">
                     <button
-                        type="submit"
-                        disabled={isSaving}
-                        className={`px-6 py-2.5 rounded-lg text-white font-medium transition flex items-center justify-center gap-2 ${
-                            isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700 shadow-sm'
-                        }`}
-                    >
-                        {isSaving && <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>}
-                        {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
-                    </button>
-
-                    <button
-                        type="button"
                         onClick={() => navigate(-1)}
-                        disabled={isSaving}
-                        className="px-6 py-2.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium transition"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                        aria-label="Quay lại"
                     >
-                        Hủy
+                        <ArrowLeft size={18} />
                     </button>
+                    <div>
+                        <p className="text-sm font-semibold text-sky-700">Cập nhật hồ sơ</p>
+                        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Chỉnh sửa thông tin cá nhân</h1>
+                    </div>
                 </div>
+            </section>
 
+            <form onSubmit={handleSubmit(onSubmit)} className="rounded-[28px] border border-slate-300 bg-white p-6 shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+                <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+                    <div className="rounded-3xl border border-slate-300 bg-slate-50/70 p-5">
+                        <p className="text-sm font-semibold text-slate-700">Ảnh đại diện</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                            Ảnh sẽ hiển thị trong header và các khu vực quản trị liên quan.
+                        </p>
+
+                        <div className="mt-6 flex flex-col items-center gap-4">
+                            <div className="group relative">
+                                <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-3xl border-4 border-white bg-sky-100 text-5xl font-semibold text-sky-700 shadow-md ring-1 ring-slate-300">
+                                    {avatarPreview ? (
+                                        <img src={avatarPreview} alt="Ảnh đại diện" className="h-full w-full object-cover" />
+                                    ) : (
+                                        avatarLetter
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current.click()}
+                                    className="absolute inset-0 flex items-center justify-center rounded-3xl bg-slate-950/45 text-sm font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100"
+                                >
+                                    <Camera size={18} className="mr-2" />
+                                    Đổi ảnh
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current.click()}
+                                className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700"
+                            >
+                                <Camera size={16} />
+                                Chọn ảnh mới
+                            </button>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                accept="image/*"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="space-y-5">
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-slate-700">
+                                Họ và tên <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="relative">
+                                <UserRound className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="text"
+                                    {...register("name", { required: "Vui lòng nhập họ tên" })}
+                                    className={`h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-4 focus:ring-sky-100 ${
+                                        errors.name ? "border-rose-300" : "border-slate-300 focus:border-sky-400"
+                                    }`}
+                                    placeholder="Nhập họ và tên..."
+                                />
+                            </div>
+                            {errors.name && <p className="mt-2 text-sm font-medium text-rose-600">{errors.name.message}</p>}
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <ReadOnlyField
+                                icon={Mail}
+                                label="Email"
+                                value={user.email}
+                                {...register("email")}
+                                note="Email là thông tin định danh, không thể thay đổi."
+                            />
+
+                            <div>
+                                <label className="mb-2 block text-sm font-semibold text-slate-700">Vai trò</label>
+                                <div className="relative">
+                                    <ShieldCheck className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                    <input
+                                        type="text"
+                                        value={user.role_id?.title || "Chưa phân quyền"}
+                                        readOnly
+                                        className="h-12 w-full cursor-not-allowed rounded-2xl border border-slate-300 bg-slate-50 pl-11 pr-4 text-sm text-slate-500 outline-none"
+                                    />
+                                </div>
+                                <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-600">
+                                    <LockKeyhole size={13} />
+                                    Quyền do quản trị viên cấp cao cấu hình.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row">
+                            <button
+                                type="submit"
+                                disabled={isSaving}
+                                className={`inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-semibold text-white shadow-sm transition ${
+                                    isSaving ? 'cursor-not-allowed bg-sky-400' : 'bg-sky-600 hover:bg-sky-700'
+                                }`}
+                            >
+                                {isSaving ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}
+                                {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => navigate(-1)}
+                                disabled={isSaving}
+                                className="inline-flex h-12 items-center justify-center rounded-2xl bg-slate-100 px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+                            >
+                                Hủy
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </form>
+        </div>
+    );
+}
 
+function ReadOnlyField({ icon, label, note, ...inputProps }) {
+    const IconComponent = icon;
+
+    return (
+        <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-700">{label}</label>
+            <div className="relative">
+                <IconComponent className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                    type="email"
+                    readOnly
+                    className="h-12 w-full cursor-not-allowed rounded-2xl border border-slate-300 bg-slate-50 pl-11 pr-4 text-sm text-slate-500 outline-none"
+                    {...inputProps}
+                />
+            </div>
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-600">
+                <LockKeyhole size={13} />
+                {note}
+            </p>
         </div>
     );
 }
