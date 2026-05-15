@@ -24,6 +24,7 @@ const ClientLayout = () => {
     loadingConversation,
     conversationId, 
     sendMessage, 
+    appendAssistantMessage,
     isLimitReached,
     loadConversation, 
     clearChat 
@@ -126,7 +127,9 @@ const ClientLayout = () => {
           messages,
           loading,
           loadingConversation,
+          conversationId,
           sendMessage,
+          appendAssistantMessage,
           isLimitReached,
           onChatHistoryCleared: handleChatHistoryCleared,
           isDarkMode,

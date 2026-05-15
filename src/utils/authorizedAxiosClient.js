@@ -18,6 +18,10 @@ let refreshTokenPromise = null;
 authorizedAxiosInstance.interceptors.response.use((response) => {
   return response;
 }, async (error) => {
+  if (error.code === 'ERR_CANCELED' || error.name === 'CanceledError') {
+    return Promise.reject(error);
+  }
+
   if (error.response?.status === 401) {
     await fetchLogoutAPI().catch(() => {}); 
 

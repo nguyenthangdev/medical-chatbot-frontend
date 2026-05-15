@@ -1,13 +1,17 @@
 import authorizedAxiosInstance from '../../utils/authorizedAxiosClient';
 import { API_ROOT } from '../../utils/constants';
 
-export const createConversation = async (userId, model = 'qwen-7b') => {
-  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/conversation`, { userId, model });
+export const createConversation = async (userId, model = 'qwen-7b', options = {}) => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/conversation`, { userId, model }, {
+    signal: options.signal
+  });
   return response.data;
 }
 
-export const sendMessages = async (conversationId, message, model = 'qwen-7b') => {
-  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/message`, { conversationId, message, model });
+export const sendMessages = async (conversationId, message, model = 'qwen-7b', options = {}) => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/message`, { conversationId, message, model }, {
+    signal: options.signal
+  });
   return response.data;
 }
 
@@ -36,17 +40,25 @@ export const deleteAllConversationsAPI = async () => {
   return response.data;
 };
 
-export const speechToText = async (audioBlob) => {
+export const speechToText = async (audioBlob, options = {}) => {
   const formData = new FormData();
   formData.append('file', audioBlob, 'audio.webm');
   const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/stt`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    signal: options.signal
   });
   return response.data;
 }
 
-export const textToSpeech = async (text, conversationId) => {
-  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/tts`, { text, conversationId });
+export const textToSpeech = async (text, conversationId, options = {}) => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/tts`, { text, conversationId }, {
+    signal: options.signal
+  });
+  return response.data;
+}
+
+export const cancelChatResponse = async (conversationId) => {
+  const response = await authorizedAxiosInstance.post(`${API_ROOT}/api/v1/chat/cancel`, { conversationId });
   return response.data;
 }
 

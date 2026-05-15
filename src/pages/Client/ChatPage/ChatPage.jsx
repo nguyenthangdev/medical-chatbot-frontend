@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useRef, useEffect } from 'react';
 import { IoSendSharp } from "react-icons/io5";
-import { AlertTriangle, Bot, Info, Menu, Mic, Paperclip, Sparkles, Stethoscope } from "lucide-react";
+import { AlertTriangle, Bot, Info, Menu, Mic, Paperclip, Sparkles, Square, Stethoscope } from "lucide-react";
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { speechToText, textToSpeech } from '../../../apis/Client/chat.api';
+import { cancelChatResponse, speechToText, textToSpeech } from '../../../apis/Client/chat.api';
 import SmoothTyping from "../../../components/Client/SmoothTyping"
 import DynamicLoading from "../../../components/Client/DynamicLoading"
 import TypewriterMessage from "../../../components/Client/TypewriterMessage"
@@ -14,9 +14,11 @@ const getVietnamTime = () => {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
 };
 
+const STOPPED_RESPONSE_MESSAGE = 'Đã dừng câu trả lời đang chạy.';
+
 const ChatPage = () => {
   const [selectedModel, setSelectedModel] = useState('qwen');
-  const { setIsMobileMenuOpen, fontSize, messages, loading, loadingConversation, sendMessage, isLimitReached, isDarkMode } = useOutletContext();
+  const { setIsMobileMenuOpen, fontSize, messages, loading, loadingConversation, conversationId, sendMessage, appendAssistantMessage, isLimitReached, isDarkMode } = useOutletContext();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -30,7 +32,14 @@ const ChatPage = () => {
   const responseAudioRef = useRef(null);
   const audioContextRef = useRef(null);
   const audioSourceRef = useRef(null);
+  const voiceAbortControllerRef = useRef(null);
+  const voiceCanceledRef = useRef(false);
+  const activeVoiceConversationRef = useRef(null);
+  const voicePlaybackResolverRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const textAbortControllerRef = useRef(null);
+  const activeTextConversationRef = useRef(null);
+  const [isTextChatRunning, setIsTextChatRunning] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const fileInputRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(() => getVietnamTime());
@@ -74,11 +83,38 @@ const ChatPage = () => {
       mediaRecorderRef.current?.state === 'recording' && mediaRecorderRef.current.stop();
       mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
       responseAudioRef.current?.pause();
+      voiceAbortControllerRef.current?.abort();
+      textAbortControllerRef.current?.abort();
+      voicePlaybackResolverRef.current?.();
       audioSourceRef.current?.disconnect();
       audioContextRef.current?.close();
       window.speechSynthesis?.cancel();
     };
   }, []);
+
+  const sendTextMessage = async (text) => {
+    if (!text?.trim() || isTextChatRunning) return;
+
+    const controller = new AbortController();
+    textAbortControllerRef.current = controller;
+    activeTextConversationRef.current = conversationId || null;
+    setIsTextChatRunning(true);
+
+    try {
+      await sendMessage(text, selectedModel, {
+        signal: controller.signal,
+        onConversationReady: (id) => {
+          activeTextConversationRef.current = id;
+        }
+      });
+    } finally {
+      if (textAbortControllerRef.current === controller) {
+        textAbortControllerRef.current = null;
+        activeTextConversationRef.current = null;
+        setIsTextChatRunning(false);
+      }
+    }
+  };
 
   const handleSend = async (e) => {
     e?.preventDefault();
@@ -87,11 +123,26 @@ const ChatPage = () => {
     const textToSend = inputText;
     setInputText('');
     setSelectedImage(null);
-    await sendMessage(textToSend, selectedModel); 
+    await sendTextMessage(textToSend);
   };
 
   const handleResend = async (text) => {
-    await sendMessage(text, selectedModel);
+    await sendTextMessage(text);
+  };
+
+  const handleStopTextChat = () => {
+    if (!isTextChatRunning && !textAbortControllerRef.current) return;
+
+    textAbortControllerRef.current?.abort();
+    appendAssistantMessage?.(STOPPED_RESPONSE_MESSAGE);
+
+    if (activeTextConversationRef.current) {
+      cancelChatResponse(activeTextConversationRef.current).catch(() => {});
+    }
+
+    textAbortControllerRef.current = null;
+    activeTextConversationRef.current = null;
+    setIsTextChatRunning(false);
   };
 
   const getTextSizeClass = () => {
@@ -112,9 +163,34 @@ const ChatPage = () => {
   const stopVoicePlayback = () => {
     responseAudioRef.current?.pause();
     responseAudioRef.current = null;
+    voicePlaybackResolverRef.current?.();
+    voicePlaybackResolverRef.current = null;
     audioSourceRef.current?.disconnect();
     audioSourceRef.current = null;
     window.speechSynthesis?.cancel();
+    setVoiceState('idle');
+  };
+
+  const cancelVoiceSession = async () => {
+    voiceCanceledRef.current = true;
+    voiceAbortControllerRef.current?.abort();
+
+    if (isRecording) {
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      setIsRecording(false);
+    }
+
+    stopVoicePlayback();
+
+    if (activeVoiceConversationRef.current && voiceState === 'thinking') {
+      appendAssistantMessage?.(STOPPED_RESPONSE_MESSAGE);
+      cancelChatResponse(activeVoiceConversationRef.current).catch(() => {});
+    }
+
+    setVoiceError('');
     setVoiceState('idle');
   };
 
@@ -127,8 +203,15 @@ const ChatPage = () => {
 
       if (!AudioContextClass) {
         audio.volume = 1;
-        audio.onended = resolve;
-        audio.onerror = reject;
+        audio.onended = () => {
+          voicePlaybackResolverRef.current = null;
+          resolve();
+        };
+        audio.onerror = (event) => {
+          voicePlaybackResolverRef.current = null;
+          reject(event);
+        };
+        voicePlaybackResolverRef.current = resolve;
         audio.play().catch(reject);
         return;
       }
@@ -147,14 +230,17 @@ const ChatPage = () => {
         source.disconnect();
         gainNode.disconnect();
         audioSourceRef.current = null;
+        voicePlaybackResolverRef.current = null;
         resolve();
       };
       audio.onerror = (event) => {
         source.disconnect();
         gainNode.disconnect();
         audioSourceRef.current = null;
+        voicePlaybackResolverRef.current = null;
         reject(event);
       };
+      voicePlaybackResolverRef.current = resolve;
 
       audioContext.resume()
         .then(() => audio.play())
@@ -185,19 +271,24 @@ const ChatPage = () => {
 
     setVoiceState('speaking');
     try {
-      const res = await textToSpeech(text, targetConversationId);
+      const res = await textToSpeech(text, targetConversationId, {
+        signal: voiceAbortControllerRef.current?.signal
+      });
       if (!res?.audio_url) throw new Error('Không có audio_url');
+      if (voiceCanceledRef.current) return;
 
       await playBoostedAudio(res.audio_url);
     } catch (error) {
+      if (voiceCanceledRef.current || error.code === 'ERR_CANCELED' || error.name === 'CanceledError') return;
       await speakWithBrowser(text);
     } finally {
       responseAudioRef.current = null;
-      setVoiceState('idle');
+      if (!voiceCanceledRef.current) setVoiceState('idle');
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = ({ cancel = false } = {}) => {
+    voiceCanceledRef.current = cancel;
     if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
@@ -211,7 +302,7 @@ const ChatPage = () => {
     }
 
     if (voiceState === 'speaking') {
-      stopVoicePlayback();
+      cancelVoiceSession();
       return;
     }
 
@@ -221,6 +312,9 @@ const ChatPage = () => {
 
     try {
       setVoiceError('');
+      voiceCanceledRef.current = false;
+      activeVoiceConversationRef.current = null;
+      voiceAbortControllerRef.current = new AbortController();
       responseAudioRef.current?.pause();
       window.speechSynthesis?.cancel();
 
@@ -240,14 +334,30 @@ const ChatPage = () => {
         mediaStreamRef.current = null;
         setIsRecording(false);
 
+        if (voiceCanceledRef.current) {
+          setVoiceState('idle');
+          return;
+        }
+
         try {
           setVoiceState('transcribing');
-          const res = await speechToText(audioBlob);
+          const res = await speechToText(audioBlob, {
+            signal: voiceAbortControllerRef.current?.signal
+          });
+          if (voiceCanceledRef.current) return;
+
           const text = res.text || res.data?.text; 
           if (text) {
              setInputText('');
              setVoiceState('thinking');
-             const chatResult = await sendMessage(text, selectedModel);
+             const chatResult = await sendMessage(text, selectedModel, {
+               signal: voiceAbortControllerRef.current?.signal,
+               onConversationReady: (id) => {
+                 activeVoiceConversationRef.current = id;
+               }
+             });
+             if (voiceCanceledRef.current) return;
+
              const answer = chatResult?.response;
              if (answer && !answer.includes('Hết hạn mức')) {
                await playAssistantVoice(answer, chatResult.conversationId);
@@ -259,6 +369,10 @@ const ChatPage = () => {
             setVoiceState('idle');
           }
         } catch (err) {
+          if (voiceCanceledRef.current || err.code === 'ERR_CANCELED' || err.name === 'CanceledError') {
+            setVoiceState('idle');
+            return;
+          }
           setVoiceError('Không thể xử lý giọng nói. Vui lòng thử lại.');
           setVoiceState('idle');
         }
@@ -315,11 +429,7 @@ const ChatPage = () => {
           <span className="font-medium">{getVoiceStatusText()}</span>
           <button
             type="button"
-            onClick={() => {
-              if (isRecording) stopRecording();
-              stopVoicePlayback();
-              setVoiceError('');
-            }}
+            onClick={cancelVoiceSession}
             className={`flex-shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
               voiceError
                 ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
@@ -328,7 +438,7 @@ const ChatPage = () => {
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            {voiceState === 'recording' ? 'Gửi' : 'Dừng'}
+            Dừng
           </button>
         </div>
       )}
@@ -397,11 +507,20 @@ const ChatPage = () => {
             </div>
 
             <button 
-              type="submit" 
-              disabled={isLimitReached || (!inputText.trim() && !selectedImage)}
-              className={`w-9 h-9 flex items-center justify-center rounded-2xl transition duration-300 ${(!inputText.trim() && !selectedImage) || isLimitReached ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-600/20'}`}
+              type={isTextChatRunning ? 'button' : 'submit'}
+              onClick={isTextChatRunning ? handleStopTextChat : undefined}
+              disabled={!isTextChatRunning && (isLimitReached || (!inputText.trim() && !selectedImage))}
+              className={`w-9 h-9 flex items-center justify-center rounded-2xl transition duration-300 ${
+                isTextChatRunning
+                  ? 'bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-600/20'
+                  : (!inputText.trim() && !selectedImage) || isLimitReached
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-600/20'
+              }`}
+              title={isTextChatRunning ? 'Dừng phản hồi' : 'Gửi tin nhắn'}
+              aria-label={isTextChatRunning ? 'Dừng phản hồi' : 'Gửi tin nhắn'}
             >
-              <IoSendSharp size={16} />
+              {isTextChatRunning ? <Square size={15} fill="currentColor" /> : <IoSendSharp size={16} />}
             </button>
           </div>
 
