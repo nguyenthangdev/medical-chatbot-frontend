@@ -13,6 +13,7 @@ import {
     ShieldUser,
     Shield,
     Key,
+    BarChart3,
     Stethoscope
 } from "lucide-react";
 import { useAuth } from "../../contexts/Admin/AdminAuthContext";
@@ -34,7 +35,8 @@ export default function Sidebar({ open, collapsed, toggleCollapse }) {
     };
     
     const menu = [
-        { name: "Tổng quan", path: "/admin/dashboard", icon: <LayoutDashboard size={20} /> },
+        // { name: "Tổng quan", path: "/admin/dashboard", icon: <LayoutDashboard size={20} /> },
+        { name: "BI Dashboard", path: "/admin/dashboard", icon: <BarChart3 size={20} /> },
         { name: "Tài khoản người dùng", path: "/admin/users", icon: <Users size={20} />, permission: "users_view" },
         { name: "Tài khoản quản trị", path: "/admin/accounts", icon: <ShieldUser size={20} />, permission: "accounts_view" },
         { name: "Cuộc hội thoại", path: "/admin/conversations", icon: <MessageCircle size={20} />, permission: "conversations_view" },
