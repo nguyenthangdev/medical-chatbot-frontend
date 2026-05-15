@@ -7,6 +7,7 @@ import ClientAuthLayout from './layouts/Client/ClientAuthLayout';
 import AdminLogin from './pages/Admin/Auth/AdminLogin';
 import AdminRegister from './pages/Admin/Auth/AdminRegister';
 import Dashboard from './pages/Admin/Dashboard/Index';
+import BIIndex from './pages/Admin/BI/Index';
 import ProfileDetail from './pages/Admin/Profile/Detail';
 import ProfileEdit from './pages/Admin/Profile/Edit';
 import UserIndex from './pages/Admin/User/Index';
@@ -101,7 +102,8 @@ function App() {
         </AdminProviders>
       }>
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        {/* <Route path="dashboard" element={<Dashboard />} /> */}
+        <Route path="dashboard" element={<BIIndex />} />
         <Route path="my-profile" element={<ProfileDetail />} />
         <Route path="my-profile/edit" element={<ProfileEdit />} />
         <Route path="users" element={<UserIndex />} />
