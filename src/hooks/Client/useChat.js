@@ -13,7 +13,7 @@ export const useChat = (userId, onChatUpdated) => {
   // 1. Thêm State kiểm tra xem phiên này đã hết hạn mức chưa
   const [isLimitReached, setIsLimitReached] = useState(false)
 
-  const sendMessage = useCallback(async (message, selectedModel = 'qwen') => {
+  const sendMessage = useCallback(async (message, selectedModel = 'qwen', options = {}) => {
     // Nếu đang loading hoặc đã hết hạn mức thì chặn không cho gửi
     if (!message.trim() || loading || loadingConversation || isLimitReached) return null
     setError(null)
@@ -28,12 +28,13 @@ export const useChat = (userId, onChatUpdated) => {
       let currentId = conversationId; 
 
       if (!currentId) {
-        const res = await createConversation(userId, selectedModel)
+        const res = await createConversation(userId, selectedModel, { signal: options.signal })
         currentId = res.conversationId 
         setConversationId(currentId)   
       }
+      options.onConversationReady?.(currentId)
 
-      const res = await sendMessages(currentId, message, selectedModel)
+      const res = await sendMessages(currentId, message, selectedModel, { signal: options.signal })
 
       // 2. LOGIC KIỂM TRA HẠN MỨC (GIỐNG CLAUDE)
       if (res.response && res.response.includes('Hết hạn mức')) {
@@ -62,6 +63,9 @@ export const useChat = (userId, onChatUpdated) => {
       return { ...res, conversationId: currentId };
 
     } catch (err) {
+      if (err.code === 'ERR_CANCELED' || err.name === 'CanceledError') {
+        return null;
+      }
       setError(err.response?.data?.error || 'Lỗi kết nối. Vui lòng thử lại.')
       return null;
     } finally {
@@ -101,6 +105,21 @@ export const useChat = (userId, onChatUpdated) => {
     setIsLimitReached(false) // Reset khi tạo chat mới
   }, [])
 
+  const appendAssistantMessage = useCallback((content, extra = {}) => {
+    if (!content?.trim()) return
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'assistant',
+        content,
+        createdAt: new Date(),
+        isNew: true,
+        ...extra
+      },
+    ])
+  }, [])
+
   // 3. NHỚ RETURN isLimitReached RA NGOÀI ĐỂ UI SỬ DỤNG
-  return { messages, loading, loadingConversation, error, conversationId, isLimitReached, sendMessage, loadConversation, clearChat }
+  return { messages, loading, loadingConversation, error, conversationId, isLimitReached, sendMessage, loadConversation, clearChat, appendAssistantMessage }
 }
