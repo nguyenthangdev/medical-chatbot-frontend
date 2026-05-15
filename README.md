@@ -295,6 +295,3 @@ yarn lint
 
 ---
 
-## 📄 License
-
-MIT License.
