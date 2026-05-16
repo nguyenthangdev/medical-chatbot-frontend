@@ -7,7 +7,7 @@ const defaultDashboards = [
   { key: 'system', title: 'Tổng quan hệ thống' },
   { key: 'chatbot', title: 'Hiệu năng chatbot' },
   { key: 'safety', title: 'An toàn y tế' },
-  { key: 'models', title: 'Mô hình AI' },
+  { key: 'models', title: 'Quản trị mô hình AI' },
 ];
 
 export default function BIIndex() {
@@ -164,12 +164,12 @@ export default function BIIndex() {
           </div>
         )}
 
-        {embedError ? (
+        <div ref={mountRef} className="min-h-[760px] w-full" />
+
+        {embedError && (
           <div className="rounded-[22px] border border-rose-200 bg-rose-50 p-6 text-sm font-semibold text-rose-700">
             {embedError}
           </div>
-        ) : (
-          <div ref={mountRef} className="min-h-[760px] w-full" />
         )}
       </section>
     </div>
