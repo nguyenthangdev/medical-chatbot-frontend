@@ -1,25 +1,24 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 
 const TypewriterMessage = ({ text, speed = 15 }) => {
-  const [displayedText, setDisplayedText] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [typing, setTyping] = useState({ source: text, displayedText: '', currentIndex: 0 });
 
-  useEffect(() => {
-    // Reset khi text thay đổi
-    setDisplayedText("");
-    setCurrentIndex(0);
-  }, [text]);
+  const isNewText = typing.source !== text;
+  const displayedText = isNewText ? '' : typing.displayedText;
+  const currentIndex = isNewText ? 0 : typing.currentIndex;
 
   useEffect(() => {
     if (currentIndex < text.length) {
       const timer = setTimeout(() => {
-        setDisplayedText(prev => prev + text[currentIndex]);
-        setCurrentIndex(prev => prev + 1);
+        setTyping({
+          source: text,
+          displayedText: displayedText + text[currentIndex],
+          currentIndex: currentIndex + 1
+        });
       }, speed);
       return () => clearTimeout(timer);
     }
-  }, [text, currentIndex, speed]);
+  }, [text, displayedText, currentIndex, speed]);
 
   return <p className="whitespace-pre-wrap">{displayedText}</p>;
 };

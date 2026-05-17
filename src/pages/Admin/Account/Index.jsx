@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { AlertTriangle, Plus, Search, ShieldAlert, ShieldUser, Trash2 } from 'lucide-react';
@@ -51,32 +50,48 @@ export default function AccountIndex() {
     { header: "Trạng thái", accessor: "status" },
   ];
 
-  const fetchAccounts = useCallback(async () => {
+  const sortSystemAdminFirst = (accountList = []) => {
+    return [...accountList].sort((a, b) => {
+      const aIsAdmin = a.role_id?.isSystemAdmin ? 1 : 0;
+      const bIsAdmin = b.role_id?.isSystemAdmin ? 1 : 0;
+      return bIsAdmin - aIsAdmin;
+    });
+  };
+
+  const reloadAccounts = async () => {
     if (isLoading || !hasPermission) return; 
     try {
       const params = { page, limit, keyword };
       const res = await getAccountsAPI(params);
-      
-      let fetchedAccounts = res.accounts || [];
-      
-      // Đưa tài khoản hệ thống nổi lên đầu trang
-      fetchedAccounts.sort((a, b) => {
-        const aIsAdmin = a.role_id?.isSystemAdmin ? 1 : 0;
-        const bIsAdmin = b.role_id?.isSystemAdmin ? 1 : 0;
-        return bIsAdmin - aIsAdmin;
-      });
-
-      setAccounts(fetchedAccounts);
+      setAccounts(sortSystemAdminFirst(res.accounts));
       setPagination(res.pagination);
       if (res.keyword) setSearchInput(res.keyword);
     } catch (error) {
       console.log("Lỗi khi tải danh sách tài khoản");
     } 
-  }, [page, limit, keyword, isLoading, hasPermission]);
+  };
 
   useEffect(() => {
-    fetchAccounts();
-  }, [fetchAccounts]);
+    if (isLoading || !hasPermission) return undefined;
+
+    let cancelled = false;
+    const params = { page, limit, keyword };
+
+    getAccountsAPI(params)
+      .then((res) => {
+        if (cancelled) return;
+        setAccounts(sortSystemAdminFirst(res.accounts));
+        setPagination(res.pagination);
+        if (res.keyword) setSearchInput(res.keyword);
+      })
+      .catch(() => {
+        if (!cancelled) console.log("Lỗi khi tải danh sách tài khoản");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, limit, keyword, isLoading, hasPermission]);
 
   const updateParams = (newParams) => {
     const currentParams = Object.fromEntries([...searchParams]);
@@ -99,7 +114,7 @@ export default function AccountIndex() {
       if (accounts.length === 1 && page > 1) {
         updateParams({ page: page - 1 });
       } else {
-        fetchAccounts(); 
+        reloadAccounts(); 
       }
       closeDeleteModal(); 
     } catch (error) {
@@ -188,6 +203,7 @@ export default function AccountIndex() {
             data={accounts}
             basePath="/admin/accounts"
             onDelete={openDeleteModal} 
+            hideEditIf={(row) => row.role_id?.isSystemAdmin}
             hideDeleteIf={(row) => row.role_id?.isSystemAdmin} 
             actions={[
               (user?.role_id?.isSystemAdmin || user?.role_id?.permissions?.includes('accounts_view')) && 'view',

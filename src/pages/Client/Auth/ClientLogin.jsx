@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,11 +7,14 @@ import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail, Shiel
 import { loginClientAPI } from '../../../apis/Client/auth.api';
 import { useAuth } from '../../../contexts/Client/ClientAuthContext';
 import { loginSchema } from '../../../validations/Client/auth.validation';
+import { formatLoginLockRemaining, getLoginLockRemainingSeconds } from '../../../utils/authLock';
 
 const ClientLogin = () => {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState(null);
+  const [lockRemainingSeconds, setLockRemainingSeconds] = useState(0);
 
   const {
     register,
@@ -19,7 +22,26 @@ const ClientLogin = () => {
     formState: { errors, isSubmitting },
   } = useForm({ mode: 'onTouched', resolver: zodResolver(loginSchema) });
 
+  useEffect(() => {
+    if (!lockedUntil) return undefined;
+
+    const updateRemaining = () => {
+      const remaining = getLoginLockRemainingSeconds(lockedUntil);
+      setLockRemainingSeconds(remaining);
+      if (remaining <= 0) setLockedUntil(null);
+    };
+
+    const timer = setInterval(updateRemaining, 1000);
+
+    return () => clearInterval(timer);
+  }, [lockedUntil]);
+
   const onSubmit = async (data) => {
+    if (lockRemainingSeconds > 0) {
+      toast.error(`Tài khoản đang bị tạm khóa. Vui lòng thử lại sau ${formatLoginLockRemaining(lockRemainingSeconds)}.`);
+      return;
+    }
+
     try {
       const res = await loginClientAPI(data);
       if (res.code === 200) {
@@ -30,6 +52,11 @@ const ClientLogin = () => {
         toast.error(res.message || 'Tài khoản hoặc mật khẩu không chính xác!');
       }
     } catch (err) {
+      const lockedUntilValue = err.response?.data?.lockedUntil;
+      if (lockedUntilValue) {
+        setLockedUntil(lockedUntilValue);
+        setLockRemainingSeconds(getLoginLockRemainingSeconds(lockedUntilValue));
+      }
       toast.error(err.response?.data?.message || 'Tài khoản hoặc mật khẩu không chính xác!');
     }
   };
@@ -57,6 +84,13 @@ const ClientLogin = () => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        {lockRemainingSeconds > 0 && (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+            Tài khoản đang bị tạm khóa. Thử lại sau {formatLoginLockRemaining(lockRemainingSeconds)}.
+          </div>
+        )}
+
         <div>
           <label className="mb-2 block text-sm font-semibold text-slate-700">Email</label>
           <div className="relative">
@@ -113,9 +147,9 @@ const ClientLogin = () => {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || lockRemainingSeconds > 0}
           className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold text-white shadow-[0_16px_36px_rgba(37,99,235,0.22)] transition-all ${
-            isSubmitting
+            isSubmitting || lockRemainingSeconds > 0
               ? 'cursor-not-allowed bg-slate-300 shadow-none'
               : 'bg-blue-600 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_18px_42px_rgba(37,99,235,0.28)]'
           }`}

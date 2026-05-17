@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom"; // THÊM useNavigate
 import { toast } from "react-toastify";
 import { AlertTriangle, Bot, Filter, MessageSquareText, Search, ShieldAlert, Trash2, UserRound } from "lucide-react";
@@ -63,20 +62,25 @@ export default function MessageIndex() {
 
     // 2. FETCH DATA CONVERSATIONS (CHẶN NẾU KHÔNG CÓ QUYỀN)
     useEffect(() => {
-        if (authLoading || !hasPermission) return;
-        const fetchConvs = async () => {
-            try {
-                const res = await getConversationsAPI({ limit: 100 });
-                setConversations(res.data || []);
-            } catch (error) {
-                console.error("Lỗi lấy danh sách hội thoại");
-            }
+        if (authLoading || !hasPermission) return undefined;
+
+        let cancelled = false;
+
+        getConversationsAPI({ limit: 100 })
+            .then((res) => {
+                if (!cancelled) setConversations(res.data || []);
+            })
+            .catch(() => {
+                if (!cancelled) console.error("Lỗi lấy danh sách hội thoại");
+            });
+
+        return () => {
+            cancelled = true;
         };
-        fetchConvs();
     }, [authLoading, hasPermission]);
 
     // 3. FETCH DATA MESSAGES (CHẶN NẾU KHÔNG CÓ QUYỀN)
-    const fetchMessages = useCallback(async () => {
+    const reloadMessages = async () => {
         if (authLoading || !hasPermission) return;
         try {
             const params = { page, limit, keyword, conversationId };
@@ -88,11 +92,29 @@ export default function MessageIndex() {
         } catch (error) {
             toast.error("Lỗi tải danh sách tin nhắn!");
         }
-    }, [page, limit, keyword, conversationId, authLoading, hasPermission]);
+    };
 
     useEffect(() => {
-        fetchMessages();
-    }, [fetchMessages]);
+        if (authLoading || !hasPermission) return undefined;
+
+        let cancelled = false;
+        const params = { page, limit, keyword, conversationId };
+
+        getAllMessagesAPI(params)
+            .then((res) => {
+                if (cancelled) return;
+                setMessages(res.data);
+                setPagination(res.pagination);
+                if(res.keyword) setSearchInput(res.keyword);
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Lỗi tải danh sách tin nhắn!");
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [page, limit, keyword, conversationId, authLoading, hasPermission]);
 
     const updateParams = (newParams) => {
         const currentParams = Object.fromEntries([...searchParams]);
@@ -125,7 +147,7 @@ export default function MessageIndex() {
             if (messages.length === 1 && page > 1) {
                 updateParams({ page: page - 1 });
             } else {
-                fetchMessages();
+                reloadMessages();
             }
             closeDeleteModal();
         } catch (err) {
@@ -140,7 +162,7 @@ export default function MessageIndex() {
         try {
             await toggleMessageStatusAPI(id);
             toast.success("Cập nhật trạng thái thành công!");
-            fetchMessages(); 
+            reloadMessages(); 
         } catch (error) {
             toast.error("Lỗi cập nhật trạng thái!");
         }

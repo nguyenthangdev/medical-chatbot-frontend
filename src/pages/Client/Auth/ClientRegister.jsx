@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 import {
@@ -25,16 +25,20 @@ const ClientRegister = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const {
+    control,
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm({ mode: 'onTouched', resolver: zodResolver(registerSchema) });
 
-  const passwordValue = watch('password', '');
+  const passwordValue = useWatch({ control, name: 'password', defaultValue: '' });
 
   const onSubmit = async (data) => {
-    const { confirmPassword, ...payload } = data;
+    const payload = {
+      fullName: data.fullName,
+      email: data.email,
+      password: data.password
+    };
 
     try {
       await registerClientAPI(payload);
