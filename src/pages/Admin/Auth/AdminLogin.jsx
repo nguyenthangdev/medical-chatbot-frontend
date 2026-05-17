@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,6 +17,7 @@ import {
 import { toast } from "react-toastify";
 import { loginAdminAPI } from "../../../apis/Admin/auth.api";
 import { useAuth } from "../../../contexts/Admin/AdminAuthContext";
+import { formatLoginLockRemaining, getLoginLockRemainingSeconds } from "../../../utils/authLock";
 
 export default function AdminLogin() {
     const {
@@ -30,8 +31,29 @@ export default function AdminLogin() {
     
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [lockedUntil, setLockedUntil] = useState(null);
+    const [lockRemainingSeconds, setLockRemainingSeconds] = useState(0);
+
+    useEffect(() => {
+        if (!lockedUntil) return undefined;
+
+        const updateRemaining = () => {
+            const remaining = getLoginLockRemainingSeconds(lockedUntil);
+            setLockRemainingSeconds(remaining);
+            if (remaining <= 0) setLockedUntil(null);
+        };
+
+        const timer = setInterval(updateRemaining, 1000);
+
+        return () => clearInterval(timer);
+    }, [lockedUntil]);
 
     const onSubmit = async (data) => {
+        if (lockRemainingSeconds > 0) {
+            toast.error(`Tài khoản đang bị tạm khóa. Vui lòng thử lại sau ${formatLoginLockRemaining(lockRemainingSeconds)}.`);
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -50,6 +72,10 @@ export default function AdminLogin() {
             }
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Có lỗi xảy ra khi kết nối đến server!";
+            if (error.response?.data?.lockedUntil) {
+                setLockedUntil(error.response.data.lockedUntil);
+                setLockRemainingSeconds(getLoginLockRemainingSeconds(error.response.data.lockedUntil));
+            }
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);
@@ -141,6 +167,12 @@ export default function AdminLogin() {
                             </div>
 
                             <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
+                                {lockRemainingSeconds > 0 && (
+                                    <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                                        Tài khoản đang bị tạm khóa. Thử lại sau {formatLoginLockRemaining(lockRemainingSeconds)}.
+                                    </div>
+                                )}
+
                                 <div>
                                     <label htmlFor="admin-email" className="mb-2 block text-sm font-semibold text-slate-700">
                                         Email quản trị
@@ -214,9 +246,9 @@ export default function AdminLogin() {
 
                                 <button
                                     type="submit"
-                                    disabled={isLoading}
+                                    disabled={isLoading || lockRemainingSeconds > 0}
                                     className={`group flex h-13 w-full items-center justify-center gap-2 rounded-2xl px-5 text-base font-semibold text-white shadow-[0_14px_28px_rgba(2,132,199,0.24)] transition ${
-                                        isLoading
+                                        isLoading || lockRemainingSeconds > 0
                                             ? "cursor-not-allowed bg-sky-400"
                                             : "bg-sky-600 hover:-translate-y-0.5 hover:bg-sky-700 hover:shadow-[0_18px_34px_rgba(2,132,199,0.28)] active:translate-y-0"
                                     }`}

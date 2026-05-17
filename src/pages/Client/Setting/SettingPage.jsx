@@ -1,13 +1,13 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'; 
-import { updateMyProfileAPI } from '../../../apis/Client/myProfile.api';
+import { changeMyPasswordAPI, updateMyProfileAPI } from '../../../apis/Client/myProfile.api';
 import { useAuth } from '../../../contexts/Client/ClientAuthContext.jsx';
 import { deleteAllConversationsAPI } from '../../../apis/Client/chat.api.js';
-import { ArrowLeft, LogOut, MonitorCog, Moon, Save, Sun, Trash2, Type, UserRound } from 'lucide-react'; 
+import { ArrowLeft, KeyRound, LogOut, MonitorCog, Moon, Save, Sun, Trash2, Type, UserRound } from 'lucide-react'; 
 import ConfirmDialog from '../../../components/Client/ConfirmDialog.jsx';
+import PasswordStrength from '../../../components/Client/PasswordStrength.jsx';
 
 const SettingPage = () => {
   const navigate = useNavigate();
@@ -16,16 +16,17 @@ const SettingPage = () => {
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const { refreshUser, user, isLoading, logout } = useAuth();
 
-  const [fullName, setFullName] = useState("");
+  const [fullName, setFullName] = useState(user?.fullName || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
 
   const { fontSize, setFontSize, onChatHistoryCleared, isDarkMode, setIsDarkMode } = useOutletContext();
-
-  useEffect(() => {
-    if (user?.fullName) {
-      setFullName(user.fullName);
-    }
-  }, [user]);
 
   const handleUpdateProfile = async () => {
     if (!fullName.trim()) {
@@ -52,6 +53,43 @@ const SettingPage = () => {
   const handleChangeFontSize = (size) => {
     setFontSize(size); 
     localStorage.setItem('chatFontSize', size); 
+  };
+
+  const handlePasswordFieldChange = (field, value) => {
+    setPasswordForm((current) => ({ ...current, [field]: value }));
+    setPasswordError('');
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordForm.currentPassword) {
+      setPasswordError('Vui lòng nhập mật khẩu hiện tại');
+      return;
+    }
+
+    if (!passwordForm.newPassword) {
+      setPasswordError('Vui lòng nhập mật khẩu mới');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await changeMyPasswordAPI(passwordForm);
+      toast.success(res.message);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordError('');
+      await logout();
+    } catch (error) {
+      const message = error.response?.data?.message || 'Không thể đổi mật khẩu!';
+      setPasswordError(message);
+      // toast.error(message);
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -170,6 +208,69 @@ const SettingPage = () => {
                 >
                   <Save size={17} />
                   {isSaving ? 'Đang lưu...' : 'Lưu thông tin'}
+                </button>
+              </div>
+            </section>
+
+            <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                  <KeyRound size={23} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-bold">Đổi mật khẩu</h2>
+                  <p className={`mt-1 text-sm ${mutedText}`}>Nhập mật khẩu hiện tại trước khi tạo mật khẩu mới.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-5">
+                <div>
+                  <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Mật khẩu hiện tại</label>
+                  <input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => handlePasswordFieldChange('currentPassword', e.target.value)}
+                    className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                    placeholder="Nhập mật khẩu hiện tại"
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Mật khẩu mới</label>
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => handlePasswordFieldChange('newPassword', e.target.value)}
+                    className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                    placeholder="Tạo mật khẩu mới"
+                    autoComplete="new-password"
+                  />
+                  <PasswordStrength
+                    password={passwordForm.newPassword}
+                    error={passwordError ? { message: passwordError } : null}
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Xác nhận mật khẩu mới</label>
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => handlePasswordFieldChange('confirmPassword', e.target.value)}
+                    className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                    placeholder="Nhập lại mật khẩu mới"
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <button
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                  className="inline-flex w-fit items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <KeyRound size={17} />
+                  {isChangingPassword ? 'Đang đổi...' : 'Đổi mật khẩu'}
                 </button>
               </div>
             </section>

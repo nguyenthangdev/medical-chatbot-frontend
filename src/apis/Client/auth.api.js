@@ -6,8 +6,26 @@ export const registerClientAPI = async (data) => {
   return response.data;
 };
 
+export const verifyEmailAPI = async (token) => {
+  const response = await axios.get(`${API_ROOT}/api/v1/verify-email`, {
+    params: { token },
+    withCredentials: true
+  });
+  return response.data;
+};
+
 export const loginClientAPI = async (data) => {
   const response = await axios.post(`${API_ROOT}/api/v1/login`, data, { withCredentials: true });
+  return response.data;
+};
+
+export const forgotPasswordAPI = async (data) => {
+  const response = await axios.post(`${API_ROOT}/api/v1/forgot-password`, data, { withCredentials: true });
+  return response.data;
+};
+
+export const resetPasswordAPI = async (data) => {
+  const response = await axios.post(`${API_ROOT}/api/v1/reset-password`, data, { withCredentials: true });
   return response.data;
 };
 
