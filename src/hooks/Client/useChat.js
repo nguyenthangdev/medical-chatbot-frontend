@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { createConversation, sendMessages, getMessages } from '../../apis/Client/chat.api'
 
 export const useChat = (userId, onChatUpdated) => {
@@ -12,6 +12,36 @@ export const useChat = (userId, onChatUpdated) => {
   
   // 1. Thêm State kiểm tra xem phiên này đã hết hạn mức chưa
   const [isLimitReached, setIsLimitReached] = useState(false)
+  const [tokenQuota, setTokenQuota] = useState(null)
+  const unlockTimerRef = useRef(null)
+
+  const clearUnlockTimer = useCallback(() => {
+    if (unlockTimerRef.current) {
+      clearTimeout(unlockTimerRef.current)
+      unlockTimerRef.current = null
+    }
+  }, [])
+
+  const unlockTokenLimit = useCallback(() => {
+    clearUnlockTimer()
+    setIsLimitReached(false)
+    setTokenQuota(null)
+  }, [clearUnlockTimer])
+
+  const scheduleTokenUnlock = useCallback((quota) => {
+    clearUnlockTimer()
+    if (!quota?.resetAt) return
+
+    const delayMs = new Date(quota.resetAt).getTime() - Date.now()
+    if (delayMs <= 0) {
+      unlockTokenLimit()
+      return
+    }
+
+    unlockTimerRef.current = setTimeout(unlockTokenLimit, delayMs)
+  }, [clearUnlockTimer, unlockTokenLimit])
+
+  useEffect(() => () => clearUnlockTimer(), [clearUnlockTimer])
 
   const sendMessage = useCallback(async (message, selectedModel = 'qwen', options = {}) => {
     // Nếu đang loading hoặc đã hết hạn mức thì chặn không cho gửi
@@ -40,8 +70,13 @@ export const useChat = (userId, onChatUpdated) => {
       if (res.response && res.response.includes('Hết hạn mức')) {
         // Bật cờ khóa khung chat
         setIsLimitReached(true);
+        setTokenQuota(res.tokenQuota || null);
+        scheduleTokenUnlock(res.tokenQuota);
         // Lưu ý: Ta KHÔNG gọi setMessages để push câu chửi này vào khung chat nữa.
       } else {
+        setIsLimitReached(false);
+        setTokenQuota(null);
+        clearUnlockTimer();
         // Nếu bình thường thì vẫn push tin nhắn AI lên
         setMessages((prev) => [
           ...prev,
@@ -71,7 +106,7 @@ export const useChat = (userId, onChatUpdated) => {
     } finally {
       setLoading(false)
     }
-  }, [userId, loading, loadingConversation, conversationId, onChatUpdated, isLimitReached]) 
+  }, [userId, loading, loadingConversation, conversationId, onChatUpdated, isLimitReached, scheduleTokenUnlock, clearUnlockTimer]) 
 
   const loadConversation = useCallback(async (id) => {
     const requestId = loadRequestRef.current + 1
@@ -86,6 +121,8 @@ export const useChat = (userId, onChatUpdated) => {
       setMessages(res)
       setError(null)
       setIsLimitReached(false) // Khi load đoạn chat cũ, mặc định mở khóa
+      setTokenQuota(null)
+      clearUnlockTimer()
     } catch (err) {
       if (loadRequestRef.current !== requestId) return
       setError('Không thể tải lịch sử chat.')
@@ -94,7 +131,7 @@ export const useChat = (userId, onChatUpdated) => {
         setLoadingConversation(false)
       }
     }
-  }, [])
+  }, [clearUnlockTimer])
 
   const clearChat = useCallback(() => {
     loadRequestRef.current += 1
@@ -103,7 +140,9 @@ export const useChat = (userId, onChatUpdated) => {
     setLoadingConversation(false)
     setError(null)
     setIsLimitReached(false) // Reset khi tạo chat mới
-  }, [])
+    setTokenQuota(null)
+    clearUnlockTimer()
+  }, [clearUnlockTimer])
 
   const appendAssistantMessage = useCallback((content, extra = {}) => {
     if (!content?.trim()) return
@@ -121,5 +160,5 @@ export const useChat = (userId, onChatUpdated) => {
   }, [])
 
   // 3. NHỚ RETURN isLimitReached RA NGOÀI ĐỂ UI SỬ DỤNG
-  return { messages, loading, loadingConversation, error, conversationId, isLimitReached, sendMessage, loadConversation, clearChat, appendAssistantMessage }
+  return { messages, loading, loadingConversation, error, conversationId, isLimitReached, tokenQuota, sendMessage, loadConversation, clearChat, appendAssistantMessage }
 }
