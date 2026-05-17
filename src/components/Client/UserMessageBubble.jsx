@@ -44,13 +44,13 @@ const UserMessageBubble = ({ msg, onResend, isDarkMode = false, textSizeClass = 
 
   return (
     <div className="group flex flex-col items-end w-full">
-      <div className={`px-5 py-3 rounded-2xl ${textSizeClass} leading-relaxed max-w-[85%] md:max-w-[80%] shadow-sm ${
+      <div className={`min-w-0 px-5 py-3 rounded-2xl ${textSizeClass} leading-relaxed max-w-[85%] md:max-w-[80%] shadow-sm break-words [overflow-wrap:anywhere] ${
         isDarkMode ? 'bg-sky-100 text-slate-950' : 'bg-blue-600 text-white'
       }`}>
         {msg.imageUrl && (
           <img src={msg.imageUrl} alt="Uploaded" className="max-w-full rounded-xl mb-2 border border-gray-200" style={{ maxHeight: '300px', objectFit: 'contain' }} />
         )}
-        <p className="whitespace-pre-wrap">{msg.content}</p>
+        <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{msg.content}</p>
       </div>
       
       <div className={`flex items-center gap-3 mt-1 mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>

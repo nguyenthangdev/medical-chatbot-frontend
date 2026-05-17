@@ -16,6 +16,28 @@ const getVietnamTime = () => {
 
 const STOPPED_RESPONSE_MESSAGE = 'Đã dừng câu trả lời đang chạy.';
 
+const normalizeTranscript = (text = '') => text
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/đ/g, 'd')
+  .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const isNoSpeechHallucination = (text = '') => {
+  const normalizedText = normalizeTranscript(text);
+  if (!normalizedText) return false;
+
+  const knownHallucinations = [
+    'hay subscribe cho kenh ghien mi go de khong bo lo nhung video hap dan'
+  ];
+  const promotionalOutroPattern = /^hay subscribe cho kenh .+ de khong bo lo nhung video hap dan$/;
+
+  return promotionalOutroPattern.test(normalizedText)
+    || knownHallucinations.some((phrase) => normalizedText === phrase || normalizedText.includes(phrase));
+};
+
 const ChatPage = () => {
   const [selectedModel, setSelectedModel] = useState('qwen');
   const { setIsMobileMenuOpen, fontSize, messages, loading, loadingConversation, conversationId, sendMessage, appendAssistantMessage, isLimitReached, isDarkMode } = useOutletContext();
@@ -126,6 +148,13 @@ const ChatPage = () => {
     await sendTextMessage(textToSend);
   };
 
+  const handleComposerKeyDown = (e) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+
+    e.preventDefault();
+    handleSend(e);
+  };
+
   const handleResend = async (text) => {
     await sendTextMessage(text);
   };
@@ -146,9 +175,9 @@ const ChatPage = () => {
   };
 
   const getTextSizeClass = () => {
-    if (fontSize === 'small') return 'text-sm';
-    if (fontSize === 'large') return 'text-lg';
-    return 'text-base';
+    if (fontSize === 'small') return 'text-[14px]';
+    if (fontSize === 'large') return 'text-[22px]';
+    return 'text-[18px]';
   };
 
   const getVoiceStatusText = () => {
@@ -346,8 +375,8 @@ const ChatPage = () => {
           });
           if (voiceCanceledRef.current) return;
 
-          const text = res.text || res.data?.text; 
-          if (text) {
+          const text = (res.text || res.data?.text || '').trim();
+          if (text && !isNoSpeechHallucination(text)) {
              setInputText('');
              setVoiceState('thinking');
              const chatResult = await sendMessage(text, selectedModel, {
@@ -459,12 +488,12 @@ const ChatPage = () => {
             </button>
           </div>
         )}
-        <input 
-          type="text" 
+        <textarea
           placeholder="Mô tả triệu chứng hoặc đặt câu hỏi sức khỏe..." 
-          className={`flex-1 bg-transparent px-4 pt-3 pb-6 ${getTextSizeClass()} outline-none ${isLimitReached ? 'cursor-not-allowed text-slate-400' : isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-800 placeholder:text-slate-400'}`} 
+          className={`max-h-40 min-h-[72px] w-full resize-none overflow-y-auto bg-transparent px-4 pt-3 pb-4 ${getTextSizeClass()} outline-none whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${isLimitReached ? 'cursor-not-allowed text-slate-400' : isDarkMode ? 'text-slate-100 placeholder:text-slate-500' : 'text-slate-800 placeholder:text-slate-400'}`}
           value={inputText} 
           onChange={(e) => setInputText(e.target.value)} 
+          onKeyDown={handleComposerKeyDown}
           disabled={isRecording || isLimitReached} 
         />
         
@@ -533,7 +562,7 @@ const ChatPage = () => {
   );
 
   return (
-    <div className={`flex flex-col h-full relative ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-[#f5f9fc] text-slate-800'}`}>
+    <div className={`relative flex h-full min-h-0 flex-col overflow-hidden ${isDarkMode ? 'bg-[#0f172a] text-slate-100' : 'bg-[#f5f9fc] text-slate-800'}`}>
       
       <header className={`md:hidden border-b p-4 flex items-center justify-between shadow-sm z-20 ${isDarkMode ? 'bg-[#111827] border-white/10 text-slate-100' : 'bg-white border-sky-100 text-slate-800'}`}>
         <h1 className="text-xl font-bold flex items-center gap-2"><Stethoscope size={22} className="text-blue-500" /> Bác sĩ Ảo</h1>
@@ -557,7 +586,7 @@ const ChatPage = () => {
       )}
 
       {isNewChat ? (
-        <div className="flex flex-1 flex-col items-center justify-center px-4 pb-24">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 pb-24">
           <div className="mb-8 flex max-w-3xl flex-col items-center gap-4 text-center">
             <div className={`flex h-16 w-16 items-center justify-center rounded-3xl shadow-sm ${isDarkMode ? 'bg-sky-500/15 text-sky-300' : 'bg-sky-50 text-blue-600'}`}>
               <Sparkles className="h-8 w-8" />
@@ -574,14 +603,14 @@ const ChatPage = () => {
       ) : (
       <>
       {/* KHU VỰC HIỂN THỊ TIN NHẮN */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6" ref={chatContainerRef}>
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-4 md:space-y-6 md:p-8" ref={chatContainerRef}>
         {loadingConversation && <DynamicLoading mode="conversation" isDarkMode={isDarkMode} />}
         {(messages ?? []).map((msg, index) => (
-          <div key={msg._id || msg.id || index} className={`flex gap-4 max-w-3xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+          <div key={msg._id || msg.id || index} className={`mx-auto flex w-full min-w-0 max-w-3xl gap-2 md:gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
             
             {msg.role === 'assistant' && (
-              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-2xl bg-blue-600 text-white shadow-sm font-semibold">
-                <Bot size={20} />
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm md:h-10 md:w-10 md:rounded-2xl">
+                <Bot size={18} />
               </div>
             )}
 
@@ -590,7 +619,7 @@ const ChatPage = () => {
               <UserMessageBubble msg={msg} onResend={handleResend} isDarkMode={isDarkMode} textSizeClass={getTextSizeClass()} />
             ) : (
               /* TIN NHẮN CỦA AI */
-              <div className="py-2 max-w-[85%] md:max-w-[85%] w-full">
+              <div className="min-w-0 max-w-[calc(100%-2.5rem)] py-1.5 md:max-w-[85%] md:py-2">
                 
                 {msg.content && (
                    <ExpandableMarkdown content={msg.content} isStreaming={loading && msg.isNew} isDarkMode={isDarkMode} textSizeClass={getTextSizeClass()} />
@@ -600,9 +629,9 @@ const ChatPage = () => {
                 <div className="mt-3 flex flex-col gap-2">
                   
                   {msg.risk_level === 'high' && (
-                     <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-sm flex gap-2 items-start shadow-sm mt-2">
+                     <div className="mt-2 flex min-w-0 items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 shadow-sm">
                         <AlertTriangle size={18} className="mt-0.5 shrink-0 text-rose-500"/>
-                        <div>
+                        <div className="min-w-0 break-words [overflow-wrap:anywhere]">
                            <strong className="block mb-1">Cảnh báo y tế:</strong> 
                            Triệu chứng có thể nguy hiểm. Đề nghị đến cơ sở y tế gần nhất hoặc gọi cấp cứu ngay lập tức!
                         </div>
@@ -615,9 +644,9 @@ const ChatPage = () => {
                         <div className={`flex items-center gap-1 text-xs font-semibold mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
                            <Info size={14} /> Một số thông tin liên quan:
                         </div>
-                        <ul className={`text-xs list-disc list-inside ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <ul className={`list-outside space-y-1 pl-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                            {msg.sources.map((source, idx) => (
-                              <li key={idx} className="truncate">{source?.name || 'Tài liệu chuyên ngành'}</li>
+                              <li key={idx} className="min-w-0 whitespace-normal break-words [overflow-wrap:anywhere]">{source?.name || 'Tài liệu chuyên ngành'}</li>
                            ))}
                         </ul>
                      </div>
@@ -632,7 +661,7 @@ const ChatPage = () => {
       </div>
       
       {/* KHU VỰC FORM NHẬP TEXT */}
-      <div className={`p-4 md:p-6 w-full flex justify-center z-10 ${isDarkMode ? 'bg-gradient-to-t from-[#0f172a] to-transparent' : 'bg-gradient-to-t from-[#f5f9fc] to-transparent'}`}>
+      <div className={`z-10 flex w-full flex-shrink-0 justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 md:p-6 ${isDarkMode ? 'bg-gradient-to-t from-[#0f172a] to-transparent' : 'bg-gradient-to-t from-[#f5f9fc] to-transparent'}`}>
         {renderComposer()}
       </div>
       </>

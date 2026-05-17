@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/Client/ClientAuthContext.jsx';
 import {
@@ -23,6 +23,31 @@ import {
 import { getConversations, deleteConversationAPI, renameConversationAPI } from '../../apis/Client/chat.api';
 import { toast } from 'react-toastify';
 import ConfirmDialog from './ConfirmDialog.jsx';
+
+const normalizeSearchText = (value = '') => value
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/đ/g, 'd')
+  .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const buildConversationSearchText = (conversation) => normalizeSearchText([
+  conversation?.title || 'Cuộc hội thoại mới',
+  conversation?.intent,
+  conversation?.model,
+].filter(Boolean).join(' '));
+
+const matchesConversationSearch = (conversation, query) => {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return true;
+
+  const searchableText = buildConversationSearchText(conversation);
+  const queryTokens = normalizedQuery.split(' ').filter(Boolean);
+
+  return queryTokens.every((token) => searchableText.includes(token));
+};
 
 const Sidebar = ({
   currentConversationId,
@@ -88,8 +113,9 @@ const Sidebar = ({
     return () => cancelAnimationFrame(frameId);
   }, [renameTarget]);
 
-  const filtered = conversations?.filter((c) =>
-    c.title?.toLowerCase().includes(searchText.toLowerCase())
+  const filtered = useMemo(
+    () => conversations?.filter((conversation) => matchesConversationSearch(conversation, searchText)) || [],
+    [conversations, searchText]
   );
 
   const groupByDate = (list) => {
@@ -306,20 +332,35 @@ const Sidebar = ({
         <span className={`absolute left-3 top-2.5 ${mutedText}`}><Search size={18} /></span>
         <input
           type="text"
-          placeholder="Tìm lịch sử khám..."
+          placeholder="Tìm kiếm tin nhắn..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className={`w-full border rounded-xl py-2 pl-9 pr-3 text-sm outline-none transition-colors ${
+          className={`w-full border rounded-xl py-2 pl-9 pr-9 text-sm outline-none transition-colors ${
             isDarkMode
               ? 'bg-white/5 border-white/10 text-gray-100 placeholder:text-gray-500 focus:border-sky-400'
               : 'bg-white border-gray-200 text-gray-800 focus:border-blue-400'
           }`}
         />
+        {searchText && (
+          <button
+            type="button"
+            onClick={() => setSearchText('')}
+            className={`absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-lg transition ${hoverItem} ${mutedText}`}
+            aria-label="Xóa tìm kiếm"
+            title="Xóa tìm kiếm"
+          >
+            <X size={15} />
+          </button>
+        )}
       </div>
 
       <div className="mt-4 flex-1 overflow-y-auto pr-1">
         {!conversations || conversations.length === 0 ? (
           <p className={`${mutedText} text-sm text-center mt-8`}>Chưa có lịch sử khám</p>
+        ) : searchText.trim() && filtered.length === 0 ? (
+          <p className={`${mutedText} px-3 text-sm text-center mt-8`}>
+            Không tìm thấy lịch sử phù hợp.
+          </p>
         ) : (
           Object.entries(grouped).map(([label, items]) =>
             items.length === 0 ? null : (
@@ -422,8 +463,18 @@ const Sidebar = ({
             accountMenuOpen ? activeItem : hoverItem
           }`}
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
-            {userInitial}
+          <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl text-base font-bold text-white shadow-sm ring-1 ${
+            isDarkMode ? 'ring-white/10' : 'ring-sky-100'
+          } ${user?.avatar ? 'bg-slate-100' : 'bg-gradient-to-br from-blue-600 to-cyan-500'}`}>
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user?.fullName || 'Ảnh đại diện'}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span>{userInitial}</span>
+            )}
           </div>
           <div className="flex-1 flex flex-col items-start overflow-hidden">
             <span className="font-semibold text-sm truncate w-full text-left">
