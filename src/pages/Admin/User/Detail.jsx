@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ArrowLeft, CalendarDays, Mail, Pencil, Phone, ShieldAlert, UserRound } from "lucide-react";
+import { ArrowLeft, CalendarDays, Home, Mail, Pencil, Phone, ShieldAlert, UserRound, VenusAndMars } from "lucide-react";
 import { getUserByIdAPI } from "../../../apis/Admin/user.api";
 import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; // THÊM IMPORT
 
@@ -72,6 +72,12 @@ export default function UserDetail() {
 
     if (!clientUser) return null;
 
+    const sexLabel = {
+        MALE: 'Nam',
+        FEMALE: 'Nữ',
+        OTHER: 'Khác'
+    }[clientUser.sex] || 'Chưa cập nhật';
+
     return (
         <div className="max-w-5xl space-y-5">
             <section className="rounded-[28px] border border-slate-300 bg-white p-6 shadow-sm">
@@ -100,8 +106,12 @@ export default function UserDetail() {
 
             <section className="rounded-[28px] border border-slate-300 bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-5 border-b border-slate-100 pb-6 sm:flex-row sm:items-center">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-sky-100 text-3xl font-semibold text-sky-700">
-                        {(clientUser.fullName || clientUser.email || "U").charAt(0).toUpperCase()}
+                    <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-sky-100 text-3xl font-semibold text-sky-700">
+                        {clientUser.avatar ? (
+                            <img src={clientUser.avatar} alt="Ảnh đại diện" className="h-full w-full object-cover" />
+                        ) : (
+                            (clientUser.fullName || clientUser.email || "U").charAt(0).toUpperCase()
+                        )}
                     </div>
                     <div className="min-w-0">
                         <h3 className="truncate text-2xl font-semibold text-slate-950">{clientUser.fullName || "Chưa cập nhật"}</h3>
@@ -116,6 +126,9 @@ export default function UserDetail() {
                     <InfoCard icon={UserRound} label="Họ và tên" value={clientUser.fullName || "Chưa cập nhật"} />
                     <InfoCard icon={Mail} label="Email" value={clientUser.email || "Chưa cập nhật"} />
                     <InfoCard icon={Phone} label="Số điện thoại" value={clientUser.phone || "Chưa cập nhật"} />
+                    <InfoCard icon={CalendarDays} label="Năm sinh" value={clientUser.yearOfBirth || "Chưa cập nhật"} />
+                    <InfoCard icon={VenusAndMars} label="Giới tính" value={sexLabel} />
+                    <InfoCard icon={Home} label="Địa chỉ" value={clientUser.address || "Chưa cập nhật"} />
                     <InfoCard icon={CalendarDays} label="Ngày đăng ký" value={new Date(clientUser.createdAt).toLocaleString('vi-VN')} />
                 </div>
             </section>
