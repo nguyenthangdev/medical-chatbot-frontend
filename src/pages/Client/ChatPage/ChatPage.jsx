@@ -436,7 +436,7 @@ const ChatPage = () => {
   const getTokenLimitText = () => {
     if (!tokenQuota?.resetAt) return 'Phiên này đã hết hạn sử dụng.';
 
-    const waitMinutes = Math.max(1, Math.ceil((new Date(tokenQuota.resetAt).getTime() - Date.now()) / 60000));
+    const waitMinutes = Math.max(1, Math.ceil((new Date(tokenQuota.resetAt).getTime() - currentTime.getTime()) / 60000));
     return `Phiên này đã hết token. Tự hồi lại sau khoảng ${waitMinutes} phút.`;
   };
 

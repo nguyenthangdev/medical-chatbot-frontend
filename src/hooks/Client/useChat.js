@@ -1,6 +1,15 @@
+/* eslint-disable no-misleading-character-class */
 /* eslint-disable no-unused-vars */
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { toast } from 'react-toastify'
 import { createConversation, sendMessages, getMessages } from '../../apis/Client/chat.api'
+
+const normalizePositiveInteger = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+const MAX_MESSAGE_CHARS = normalizePositiveInteger(import.meta.env.VITE_CHAT_MAX_MESSAGE_CHARS, 4000)
 
 export const useChat = (userId, onChatUpdated) => {
   const [messages, setMessages] = useState([])
@@ -46,6 +55,25 @@ export const useChat = (userId, onChatUpdated) => {
   const sendMessage = useCallback(async (message, selectedModel = 'qwen', options = {}) => {
     // Nếu đang loading hoặc đã hết hạn mức thì chặn không cho gửi
     if (!message.trim() || loading || loadingConversation || isLimitReached) return null
+    const messageLength = [...message.trim()].length
+
+    if (messageLength > MAX_MESSAGE_CHARS) {
+      const warningResponse = `⚠️ **Tin nhắn quá dài:** Nội dung hiện có ${messageLength} ký tự, vượt quá giới hạn ${MAX_MESSAGE_CHARS} ký tự. Vui lòng rút ngắn nội dung rồi gửi lại.`
+      setError(null)
+      toast.warning(`Tin nhắn quá dài: Nội dung hiện có ${messageLength} ký tự, vượt quá giới hạn ${MAX_MESSAGE_CHARS} ký tự. Vui lòng rút ngắn nội dung rồi gửi lại.`, {
+        toastId: 'message-too-long',
+      })
+
+      return {
+        type: 'MESSAGE_TOO_LONG',
+        response: warningResponse,
+        messageLimit: {
+          maxChars: MAX_MESSAGE_CHARS,
+          currentChars: messageLength,
+        },
+      }
+    }
+
     setError(null)
 
     setMessages((prev) => [
@@ -73,6 +101,10 @@ export const useChat = (userId, onChatUpdated) => {
         setTokenQuota(res.tokenQuota || null);
         scheduleTokenUnlock(res.tokenQuota);
         // Lưu ý: Ta KHÔNG gọi setMessages để push câu chửi này vào khung chat nữa.
+      } else if (res.type === 'MESSAGE_TOO_LONG') {
+        toast.warning(res.response?.replace(/[*⚠️]/g, '') || 'Tin nhắn quá dài. Vui lòng rút ngắn nội dung rồi gửi lại.', {
+          toastId: 'message-too-long',
+        });
       } else {
         setIsLimitReached(false);
         setTokenQuota(null);
