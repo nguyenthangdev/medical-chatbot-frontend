@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
 import {
   AlertCircle,
@@ -15,6 +16,8 @@ import {
   UserRound,
 } from 'lucide-react';
 import { registerClientAPI } from '../../../apis/Client/auth.api';
+import PasswordStrength from '../../../components/Client/PasswordStrength';
+import { registerSchema } from '../../../validations/Client/auth.validation';
 
 const ClientRegister = () => {
   const navigate = useNavigate();
@@ -24,15 +27,20 @@ const ClientRegister = () => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
-  } = useForm({ mode: 'onTouched' });
+  } = useForm({ mode: 'onTouched', resolver: zodResolver(registerSchema) });
+
+  const passwordValue = watch('password', '');
 
   const onSubmit = async (data) => {
+    const { confirmPassword, ...payload } = data;
+
     try {
-      await registerClientAPI(data);
+      await registerClientAPI(payload);
       setIsSuccess(true);
-      toast.success('Tạo tài khoản thành công! Đang chuyển hướng...');
-      setTimeout(() => navigate('/login'), 2000);
+      toast.success('Đăng ký thành công! Vui lòng kiểm tra email.');
+      setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!');
     }
@@ -63,7 +71,7 @@ const ClientRegister = () => {
       {isSuccess && (
         <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
           <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-          Tài khoản đã được tạo. Hệ thống đang chuyển bạn về trang đăng nhập.
+          Tài khoản đã được tạo. Vui lòng mở email và bấm link xác nhận trước khi đăng nhập.
         </div>
       )}
 
@@ -92,28 +100,21 @@ const ClientRegister = () => {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-semibold text-slate-700">Số điện thoại hoặc Email</label>
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Email</label>
           <div className="relative">
             <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
-              type="text"
-              placeholder="0909... hoặc example@email.com"
-              className={inputClass(errors.identifier)}
-              autoComplete="username"
-              {...register('identifier', {
-                required: 'Vui lòng nhập Số điện thoại hoặc Email.',
-                validate: (value) => {
-                  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-                  const isPhone = /^(0|\+84)[0-9]{9}$/.test(value);
-                  return isEmail || isPhone || 'Vui lòng nhập đúng định dạng Email hoặc Số điện thoại.';
-                },
-              })}
+              type="email"
+              placeholder="example@email.com"
+              className={inputClass(errors.email)}
+              autoComplete="email"
+              {...register('email')}
             />
           </div>
-          {errors.identifier && (
+          {errors.email && (
             <p className="mt-2 flex items-center gap-2 text-sm font-medium text-rose-600">
               <AlertCircle size={16} />
-              {errors.identifier.message}
+              {errors.email.message}
             </p>
           )}
         </div>
@@ -124,13 +125,10 @@ const ClientRegister = () => {
             <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Tạo mật khẩu tối thiểu 6 ký tự"
+              placeholder="Tạo mật khẩu mạnh"
               className={`${inputClass(errors.password)} pr-12`}
               autoComplete="new-password"
-              {...register('password', {
-                required: 'Vui lòng nhập mật khẩu.',
-                minLength: { value: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự.' },
-              })}
+              {...register('password')}
             />
             <button
               type="button"
@@ -141,10 +139,25 @@ const ClientRegister = () => {
               {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
             </button>
           </div>
-          {errors.password && (
+          <PasswordStrength password={passwordValue} error={errors.password} />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Xác nhận mật khẩu</label>
+          <div className="relative">
+            <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Nhập lại mật khẩu"
+              className={inputClass(errors.confirmPassword)}
+              autoComplete="new-password"
+              {...register('confirmPassword')}
+            />
+          </div>
+          {errors.confirmPassword && (
             <p className="mt-2 flex items-center gap-2 text-sm font-medium text-rose-600">
               <AlertCircle size={16} />
-              {errors.password.message}
+              {errors.confirmPassword.message}
             </p>
           )}
         </div>

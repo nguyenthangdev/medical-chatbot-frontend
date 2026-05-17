@@ -25,6 +25,9 @@ import UsagePolicyPage from './pages/Client/Policy/UsagePolicyPage';
 import PrivacyPolicyPage from './pages/Client/Policy/PrivacyPolicyPage';
 import ClientLogin from './pages/Client/Auth/ClientLogin';
 import ClientRegister from './pages/Client/Auth/ClientRegister';
+import ClientForgotPassword from './pages/Client/Auth/ClientForgotPassword';
+import ClientResetPassword from './pages/Client/Auth/ClientResetPassword';
+import ClientVerifyEmail from './pages/Client/Auth/ClientVerifyEmail';
 import { ClientProviders } from './AppProviders'
 import PrivateRouteClient from "./components/Client/PrivateRoute"
 import UnauthorizedRoutesClient from "./components/Client/UnauthorizedRoutes"
@@ -90,6 +93,9 @@ function App() {
       }>
         <Route path="/login" element={<ClientLogin />} />
         <Route path="/register" element={<ClientRegister />} />
+        <Route path="/verify-email" element={<ClientVerifyEmail />} />
+        <Route path="/forgot-password" element={<ClientForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ClientResetPassword />} />
       </Route>
       {/* --- HẾT NHÓM CLIENT --- */}
 

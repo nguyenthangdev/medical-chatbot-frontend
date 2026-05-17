@@ -17,7 +17,7 @@ export const ClientAuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const res = await getMyProfileAPI();
+        const res = await getMyProfileAPI({ skipAuthRedirect: true, skipErrorToast: true });
         if (res && res.user) {
           setUser(res.user);
         } else {

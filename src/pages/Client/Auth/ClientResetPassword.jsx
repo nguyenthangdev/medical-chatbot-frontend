@@ -1,36 +1,36 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'react-toastify';
-import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
-import { loginClientAPI } from '../../../apis/Client/auth.api';
-import { useAuth } from '../../../contexts/Client/ClientAuthContext';
-import { loginSchema } from '../../../validations/Client/auth.validation';
+import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { resetPasswordAPI } from '../../../apis/Client/auth.api';
+import PasswordStrength from '../../../components/Client/PasswordStrength';
+import { resetPasswordSchema } from '../../../validations/Client/auth.validation';
 
-const ClientLogin = () => {
+const ClientResetPassword = () => {
+  const { token } = useParams();
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm({ mode: 'onTouched', resolver: zodResolver(loginSchema) });
+    watch,
+    formState: { errors, isSubmitting }
+  } = useForm({ mode: 'onTouched', resolver: zodResolver(resetPasswordSchema) });
+
+  const passwordValue = watch('password', '');
 
   const onSubmit = async (data) => {
     try {
-      const res = await loginClientAPI(data);
-      if (res.code === 200) {
-        toast.success(res.message);
-        await refreshUser();
-        setTimeout(() => navigate('/', { replace: true }), 1500);
-      } else {
-        toast.error(res.message || 'Tài khoản hoặc mật khẩu không chính xác!');
-      }
+      const res = await resetPasswordAPI({ token, ...data });
+      setIsSuccess(true);
+      toast.success(res.message);
+      setTimeout(() => navigate('/login'), 1800);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Tài khoản hoặc mật khẩu không chính xác!');
+      toast.error(err.response?.data?.message || 'Không thể đặt lại mật khẩu!');
     }
   };
 
@@ -46,46 +46,33 @@ const ClientLogin = () => {
       <div className="mb-8">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-sm font-semibold text-sky-700">
           <ShieldCheck size={16} />
-          Đăng nhập bảo mật
+          Đặt lại bảo mật
         </div>
         <h2 className="text-3xl font-semibold tracking-normal text-slate-950 sm:text-4xl">
-          Chào mừng trở lại
+          Tạo mật khẩu mới
         </h2>
         <p className="mt-3 text-base leading-7 text-slate-500">
-          Tiếp tục cuộc trò chuyện với trợ lý y tế AI và quản lý thông tin sức khỏe của bạn.
+          Mật khẩu mới cần đủ mạnh để bảo vệ dữ liệu sức khỏe của bạn.
         </p>
       </div>
 
+      {isSuccess && (
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+          <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
+          Mật khẩu đã được cập nhật. Hệ thống đang chuyển bạn về trang đăng nhập.
+        </div>
+      )}
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>
-          <label className="mb-2 block text-sm font-semibold text-slate-700">Email</label>
-          <div className="relative">
-            <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-            <input
-              type="email"
-              placeholder="example@email.com"
-              className={inputClass(errors.email)}
-              autoComplete="email"
-              {...register('email')}
-            />
-          </div>
-          {errors.email && (
-            <p className="mt-2 flex items-center gap-2 text-sm font-medium text-rose-600">
-              <AlertCircle size={16} />
-              {errors.email.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-slate-700">Mật khẩu</label>
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Mật khẩu mới</label>
           <div className="relative">
             <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Nhập mật khẩu của bạn"
+              placeholder="Tạo mật khẩu mạnh"
               className={`${inputClass(errors.password)} pr-12`}
-              autoComplete="current-password"
+              autoComplete="new-password"
               {...register('password')}
             />
             <button
@@ -97,25 +84,34 @@ const ClientLogin = () => {
               {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
             </button>
           </div>
-          {errors.password && (
+          <PasswordStrength password={passwordValue} error={errors.password} />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-slate-700">Xác nhận mật khẩu</label>
+          <div className="relative">
+            <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Nhập lại mật khẩu mới"
+              className={inputClass(errors.confirmPassword)}
+              autoComplete="new-password"
+              {...register('confirmPassword')}
+            />
+          </div>
+          {errors.confirmPassword && (
             <p className="mt-2 flex items-center gap-2 text-sm font-medium text-rose-600">
               <AlertCircle size={16} />
-              {errors.password.message}
+              {errors.confirmPassword.message}
             </p>
           )}
         </div>
 
-        <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-sm font-bold text-blue-600 transition-colors hover:text-blue-700">
-            Quên mật khẩu?
-          </Link>
-        </div>
-
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSuccess}
           className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold text-white shadow-[0_16px_36px_rgba(37,99,235,0.22)] transition-all ${
-            isSubmitting
+            isSubmitting || isSuccess
               ? 'cursor-not-allowed bg-slate-300 shadow-none'
               : 'bg-blue-600 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_18px_42px_rgba(37,99,235,0.28)]'
           }`}
@@ -123,11 +119,11 @@ const ClientLogin = () => {
           {isSubmitting ? (
             <>
               <Loader2 size={20} className="animate-spin" />
-              Đang xác thực
+              Đang cập nhật
             </>
           ) : (
             <>
-              Vào khám ngay
+              Đặt lại mật khẩu
               <ArrowRight size={19} />
             </>
           )}
@@ -135,13 +131,13 @@ const ClientLogin = () => {
       </form>
 
       <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-center text-base text-slate-600">
-        Chưa có tài khoản?{' '}
-        <Link to="/register" className="font-bold text-blue-600 transition-colors hover:text-blue-700">
-          Đăng ký mới
+        Quay lại{' '}
+        <Link to="/login" className="font-bold text-blue-600 transition-colors hover:text-blue-700">
+          đăng nhập
         </Link>
       </div>
     </div>
   );
 };
 
-export default ClientLogin;
+export default ClientResetPassword;
