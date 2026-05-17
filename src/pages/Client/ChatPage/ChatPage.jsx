@@ -40,7 +40,7 @@ const isNoSpeechHallucination = (text = '') => {
 
 const ChatPage = () => {
   const [selectedModel, setSelectedModel] = useState('qwen');
-  const { setIsMobileMenuOpen, fontSize, messages, loading, loadingConversation, conversationId, sendMessage, appendAssistantMessage, isLimitReached, isDarkMode } = useOutletContext();
+  const { setIsMobileMenuOpen, fontSize, messages, loading, loadingConversation, conversationId, sendMessage, appendAssistantMessage, isLimitReached, tokenQuota, isDarkMode } = useOutletContext();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -433,6 +433,13 @@ const ChatPage = () => {
     return 'Chào buổi tối, hôm nay bạn cần hỗ trợ gì?';
   };
 
+  const getTokenLimitText = () => {
+    if (!tokenQuota?.resetAt) return 'Phiên này đã hết hạn sử dụng.';
+
+    const waitMinutes = Math.max(1, Math.ceil((new Date(tokenQuota.resetAt).getTime() - Date.now()) / 60000));
+    return `Phiên này đã hết token. Tự hồi lại sau khoảng ${waitMinutes} phút.`;
+  };
+
   const renderComposer = () => (
     <div className="w-full max-w-3xl flex flex-col items-center relative">
       
@@ -440,7 +447,7 @@ const ChatPage = () => {
         <div className={`w-full text-sm py-2.5 px-4 rounded-t-2xl flex justify-between items-center mb-[-12px] shadow-sm z-0 pb-4 ${
           isDarkMode ? 'bg-slate-800 text-slate-100' : 'bg-slate-900 text-white'
         }`}>
-          <span className="font-medium">Phiên này đã hết hạn sử dụng.</span>
+          <span className="font-medium">{getTokenLimitText()}</span>
           <button onClick={() => window.location.reload()} className="text-slate-300 hover:text-white underline text-xs font-semibold">
             Bắt đầu mới
           </button>

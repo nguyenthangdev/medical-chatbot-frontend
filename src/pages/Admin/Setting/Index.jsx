@@ -6,6 +6,7 @@ import {
     AlertTriangle,
     Bot,
     BrainCircuit,
+    Clock,
     Gauge,
     Loader2,
     Save,
@@ -25,10 +26,11 @@ export default function SettingIndex() {
     const { user, isLoading } = useAuth();
     const navigate = useNavigate();
 
+    const defaultConfig = { temperature: 0.7, maxTokens: 2000, tokenRefillIntervalMinutes: 30, maintenanceMode: false };
     const [configs, setConfigs] = useState({
-        qwen: { temperature: 0.7, maxTokens: 2000, maintenanceMode: false },
-        gemini: { temperature: 0.7, maxTokens: 2000, maintenanceMode: false },
-        claude: { temperature: 0.7, maxTokens: 2000, maintenanceMode: false }
+        qwen: { ...defaultConfig },
+        gemini: { ...defaultConfig },
+        claude: { ...defaultConfig }
     });
 
     const hasPermission = user?.role_id?.isSystemAdmin || user?.role_id?.permissions?.includes('settings_edit');
@@ -50,7 +52,7 @@ export default function SettingIndex() {
                     const newConfigs = { ...configs };
                     res.data.forEach(setting => {
                         if (newConfigs[setting.modelName]) {
-                            newConfigs[setting.modelName] = setting;
+                            newConfigs[setting.modelName] = { ...defaultConfig, ...setting };
                         }
                     });
                     setConfigs(newConfigs);
@@ -234,7 +236,29 @@ export default function SettingIndex() {
                                 />
                             </div>
                             <p className="mt-2 text-xs leading-5 text-slate-500">
-                                Tổng token của người dùng và AI nếu vượt mức này sẽ bị chặn để bảo vệ hiệu năng hệ thống.
+                                Tổng token ghi nhận trong cửa sổ hiện tại nếu vượt mức này sẽ bị chặn để bảo vệ hiệu năng hệ thống.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="mb-2 block text-sm font-semibold text-slate-700">
+                                Thời gian hồi token
+                            </label>
+                            <div className="relative">
+                                <Clock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={currentConfig.tokenRefillIntervalMinutes}
+                                    onChange={(e) => handleChange('tokenRefillIntervalMinutes', parseInt(e.target.value))}
+                                    className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-11 pr-16 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                                />
+                                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                                    phút
+                                </span>
+                            </div>
+                            <p className="mt-2 text-xs leading-5 text-slate-500">
+                                Khi phiên dùng hết token, người dùng sẽ được tự động cấp lại toàn bộ hạn mức sau thời gian này.
                             </p>
                         </div>
                     </div>
