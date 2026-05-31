@@ -1,13 +1,14 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify'; 
-import { updateMyProfileAPI } from '../../../apis/Client/myProfile.api';
+import { changeMyPasswordAPI, updateMyProfileAPI } from '../../../apis/Client/myProfile.api';
 import { useAuth } from '../../../contexts/Client/ClientAuthContext.jsx';
 import { deleteAllConversationsAPI } from '../../../apis/Client/chat.api.js';
-import { ArrowLeft, LogOut, MonitorCog, Moon, Save, Sun, Trash2, Type, UserRound } from 'lucide-react'; 
+import { uploadClientImageAPI } from '../../../apis/Client/upload.api.js';
+import { ArrowLeft, CalendarDays, Camera, Home, KeyRound, LogOut, MonitorCog, Moon, Phone, Save, Sun, Trash2, Type, UserRound, VenusAndMars } from 'lucide-react'; 
 import ConfirmDialog from '../../../components/Client/ConfirmDialog.jsx';
+import PasswordStrength from '../../../components/Client/PasswordStrength.jsx';
 
 const SettingPage = () => {
   const navigate = useNavigate();
@@ -16,16 +17,24 @@ const SettingPage = () => {
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const { refreshUser, user, isLoading, logout } = useAuth();
 
-  const [fullName, setFullName] = useState("");
+  const [fullName, setFullName] = useState(user?.fullName || "");
+  const [yearOfBirth, setYearOfBirth] = useState(user?.yearOfBirth || "");
+  const [sex, setSex] = useState(user?.sex || "MALE");
+  const [address, setAddress] = useState(user?.address || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
+  const [selectedAvatarFile, setSelectedAvatarFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const avatarInputRef = useRef(null);
 
   const { fontSize, setFontSize, onChatHistoryCleared, isDarkMode, setIsDarkMode } = useOutletContext();
-
-  useEffect(() => {
-    if (user?.fullName) {
-      setFullName(user.fullName);
-    }
-  }, [user]);
 
   const handleUpdateProfile = async () => {
     if (!fullName.trim()) {
@@ -33,13 +42,39 @@ const SettingPage = () => {
       return;
     }
 
-    if (fullName === user.fullName) {
+    const nextProfile = {
+      fullName: fullName.trim(),
+      yearOfBirth: yearOfBirth.trim(),
+      sex,
+      address: address.trim(),
+      phone: phone.trim(),
+      avatar: avatarPreview || ''
+    };
+
+    if (
+      !selectedAvatarFile &&
+      nextProfile.fullName === (user.fullName || '') &&
+      nextProfile.yearOfBirth === (user.yearOfBirth || '') &&
+      nextProfile.sex === (user.sex || 'MALE') &&
+      nextProfile.address === (user.address || '') &&
+      nextProfile.phone === (user.phone || '') &&
+      nextProfile.avatar === (user.avatar || '')
+    ) {
       toast.info("Thông tin không có gì thay đổi!");
       return;
     }
+
     setIsSaving(true);
     try {
-      await updateMyProfileAPI({ fullName });
+      let payload = nextProfile;
+
+      if (selectedAvatarFile) {
+        toast.info("Đang tải ảnh đại diện...");
+        const uploadRes = await uploadClientImageAPI(selectedAvatarFile);
+        payload = { ...payload, avatar: uploadRes.url };
+      }
+
+      await updateMyProfileAPI(payload);
       await refreshUser(); 
       toast.success("Lưu thông tin thành công!");
     } catch (error) {
@@ -49,9 +84,61 @@ const SettingPage = () => {
     }
   };
 
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = null;
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file hình ảnh.');
+      return;
+    }
+
+    setSelectedAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
   const handleChangeFontSize = (size) => {
     setFontSize(size); 
     localStorage.setItem('chatFontSize', size); 
+  };
+
+  const handlePasswordFieldChange = (field, value) => {
+    setPasswordForm((current) => ({ ...current, [field]: value }));
+    setPasswordError('');
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordForm.currentPassword) {
+      setPasswordError('Vui lòng nhập mật khẩu hiện tại');
+      return;
+    }
+
+    if (!passwordForm.newPassword) {
+      setPasswordError('Vui lòng nhập mật khẩu mới');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const res = await changeMyPasswordAPI(passwordForm);
+      toast.success(res.message);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordError('');
+      await logout();
+    } catch (error) {
+      const message = error.response?.data?.message || 'Không thể đổi mật khẩu!';
+      setPasswordError(message);
+      // toast.error(message);
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -139,6 +226,37 @@ const SettingPage = () => {
               </div>
 
               <div className="mt-6 grid gap-5">
+                <div className="flex flex-col gap-4 rounded-3xl border border-dashed border-sky-200 bg-sky-50/50 p-4 sm:flex-row sm:items-center">
+                  <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 to-cyan-500 text-2xl font-bold text-white">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Ảnh đại diện" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        {(fullName || user?.email || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">Ảnh đại diện</p>
+                    <p className={`mt-1 text-sm ${mutedText}`}>Dùng ảnh rõ mặt hoặc biểu tượng bạn muốn hiển thị trong tài khoản.</p>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                      className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700"
+                    >
+                      <Camera size={16} />
+                      Chọn ảnh
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Họ và tên</label>
                   <input
@@ -150,11 +268,72 @@ const SettingPage = () => {
                   />
                 </div>
 
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Năm sinh</label>
+                    <div className="relative">
+                      <CalendarDays className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={yearOfBirth}
+                        onChange={(e) => setYearOfBirth(e.target.value)}
+                        className={`w-full rounded-2xl border px-4 py-3 pl-11 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                        placeholder="Ví dụ: 1998"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Giới tính</label>
+                    <div className="relative">
+                      <VenusAndMars className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <select
+                        value={sex}
+                        onChange={(e) => setSex(e.target.value)}
+                        className={`w-full appearance-none rounded-2xl border px-4 py-3 pl-11 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                      >
+                        <option value="MALE">Nam</option>
+                        <option value="FEMALE">Nữ</option>
+                        <option value="OTHER">Khác</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Số điện thoại</label>
+                    <div className="relative">
+                      <Phone className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        className={`w-full rounded-2xl border px-4 py-3 pl-11 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                        placeholder="Nhập số điện thoại"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Địa chỉ</label>
+                    <div className="relative">
+                      <Home className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className={`w-full rounded-2xl border px-4 py-3 pl-11 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                        placeholder="Nhập địa chỉ"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Tài khoản</label>
                   <input
                     type="text"
-                    defaultValue={user?.email || user?.phone || ""}
+                    defaultValue={user?.email || ""}
                     className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ${
                       isDarkMode ? 'border-white/10 bg-white/5 text-gray-400' : 'border-gray-200 bg-gray-100 text-gray-500'
                     }`}
@@ -170,6 +349,69 @@ const SettingPage = () => {
                 >
                   <Save size={17} />
                   {isSaving ? 'Đang lưu...' : 'Lưu thông tin'}
+                </button>
+              </div>
+            </section>
+
+            <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                  <KeyRound size={23} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-bold">Đổi mật khẩu</h2>
+                  <p className={`mt-1 text-sm ${mutedText}`}>Nhập mật khẩu hiện tại trước khi tạo mật khẩu mới.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-5">
+                <div>
+                  <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Mật khẩu hiện tại</label>
+                  <input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => handlePasswordFieldChange('currentPassword', e.target.value)}
+                    className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                    placeholder="Nhập mật khẩu hiện tại"
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Mật khẩu mới</label>
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => handlePasswordFieldChange('newPassword', e.target.value)}
+                    className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                    placeholder="Tạo mật khẩu mới"
+                    autoComplete="new-password"
+                  />
+                  <PasswordStrength
+                    password={passwordForm.newPassword}
+                    error={passwordError ? { message: passwordError } : null}
+                  />
+                </div>
+
+                <div>
+                  <label className={`mb-2 block text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Xác nhận mật khẩu mới</label>
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => handlePasswordFieldChange('confirmPassword', e.target.value)}
+                    className={`w-full rounded-2xl border px-4 py-3 text-base outline-none ring-4 ring-transparent transition ${inputClass}`}
+                    placeholder="Nhập lại mật khẩu mới"
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <button
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                  className="inline-flex w-fit items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <KeyRound size={17} />
+                  {isChangingPassword ? 'Đang đổi...' : 'Đổi mật khẩu'}
                 </button>
               </div>
             </section>
@@ -194,27 +436,30 @@ const SettingPage = () => {
                   <div className="grid grid-cols-3 gap-3">
                     <button
                       onClick={() => handleChangeFontSize('small')}
-                      className={`rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                      className={`flex flex-col items-center gap-1 rounded-2xl border px-4 py-3 font-bold transition ${
                         fontSize === 'small' ? selectedOptionClass : normalOptionClass
                       }`}
                     >
-                      Nhỏ
+                      <span className="text-[14px] leading-none">Nhỏ</span>
+                      <span className={`text-[11px] font-semibold ${fontSize === 'small' ? 'text-blue-600' : mutedText}`}>14px</span>
                     </button>
                     <button
                       onClick={() => handleChangeFontSize('medium')}
-                      className={`rounded-2xl border px-4 py-3 text-base font-bold transition ${
+                      className={`flex flex-col items-center gap-1 rounded-2xl border px-4 py-3 font-bold transition ${
                         fontSize === 'medium' ? selectedOptionClass : normalOptionClass
                       }`}
                     >
-                      Vừa
+                      <span className="text-[18px] leading-none">Vừa</span>
+                      <span className={`text-[11px] font-semibold ${fontSize === 'medium' ? 'text-blue-600' : mutedText}`}>18px</span>
                     </button>
                     <button
                       onClick={() => handleChangeFontSize('large')}
-                      className={`rounded-2xl border px-4 py-3 text-lg font-bold transition ${
+                      className={`flex flex-col items-center gap-1 rounded-2xl border px-4 py-3 font-bold transition ${
                         fontSize === 'large' ? selectedOptionClass : normalOptionClass
                       }`}
                     >
-                      To
+                      <span className="text-[22px] leading-none">To</span>
+                      <span className={`text-[11px] font-semibold ${fontSize === 'large' ? 'text-blue-600' : mutedText}`}>22px</span>
                     </button>
                   </div>
                 </div>
@@ -256,8 +501,12 @@ const SettingPage = () => {
           <aside className="space-y-6">
             <section className={`rounded-3xl border p-6 shadow-sm ${cardClass}`}>
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-base font-bold text-white">
-                  {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 text-base font-bold text-white">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Ảnh đại diện" className="h-full w-full object-cover" />
+                  ) : (
+                    user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate font-bold">{user?.fullName || 'Người dùng Bác sĩ Ảo'}</p>

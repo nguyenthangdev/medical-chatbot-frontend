@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom"; 
 import { toast } from "react-toastify";
 import { AlertTriangle, Search, ShieldAlert, Trash2, Users } from "lucide-react";
@@ -41,7 +40,8 @@ export default function UserIndex() {
         { header: "Trạng thái", accessor: "status" },
     ];
 
-    const fetchUsers = useCallback(async () => {
+    // 2. FETCH DATA (CHẶN NẾU KHÔNG CÓ QUYỀN)
+    const reloadUsers = async () => {
         if (authLoading || !hasPermission) return;
         try {
             const params = { page, limit, keyword };
@@ -53,11 +53,29 @@ export default function UserIndex() {
         } catch (error) {
             toast.error("Lỗi tải danh sách người dùng!");
         }
-    }, [page, limit, keyword, authLoading, hasPermission]);
+    };
 
     useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+        if (authLoading || !hasPermission) return undefined;
+
+        let cancelled = false;
+        const params = { page, limit, keyword };
+
+        getUsersAPI(params)
+            .then((res) => {
+                if (cancelled) return;
+                setUsers(res.users || []);
+                setPagination(res.pagination);
+                if(res.keyword) setSearchInput(res.keyword);
+            })
+            .catch(() => {
+                if (!cancelled) toast.error("Lỗi tải danh sách người dùng!");
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [page, limit, keyword, authLoading, hasPermission]);
 
     const updateParams = (newParams) => {
         const currentParams = Object.fromEntries([...searchParams]);
@@ -77,7 +95,7 @@ export default function UserIndex() {
         try {
             await deleteUserAPI(deleteModal.userId);
             toast.success("Xóa người dùng thành công!");
-            fetchUsers(); 
+            reloadUsers(); 
             closeDeleteModal(); 
         } catch (error) {
             toast.error("Lỗi khi xóa người dùng!");

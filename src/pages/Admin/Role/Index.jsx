@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { AlertTriangle, KeyRound, Plus, Search, Shield, ShieldAlert, Trash2 } from "lucide-react";
@@ -44,7 +43,7 @@ export default function RoleIndex() {
         { header: "Ngày tạo", accessor: "createdAt", render: (row) => new Date(row.createdAt).toLocaleDateString("vi-VN") },
     ];
 
-    const fetchRoles = useCallback(async () => {
+    const reloadRoles = async () => {
         if (authLoading || !hasPermission) return;
         try {
             const res = await getRolesAPI({ page, limit, keyword });
@@ -54,10 +53,28 @@ export default function RoleIndex() {
         } catch (error) {
             console.log("Lỗi tải danh sách nhóm quyền!");
         }
-    }, [page, limit, keyword, authLoading, hasPermission]);
-                console.log(pagination)
+    };
 
-    useEffect(() => { fetchRoles(); }, [fetchRoles]);
+    useEffect(() => {
+        if (authLoading || !hasPermission) return undefined;
+
+        let cancelled = false;
+
+        getRolesAPI({ page, limit, keyword })
+            .then((res) => {
+                if (cancelled) return;
+                setRoles(res.data);
+                setPagination(res.pagination);
+                if (res.keyword) setSearchInput(res.keyword);
+            })
+            .catch(() => {
+                if (!cancelled) console.log("Lỗi tải danh sách nhóm quyền!");
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [page, limit, keyword, authLoading, hasPermission]);
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
@@ -81,7 +98,7 @@ export default function RoleIndex() {
             if (roles.length === 1 && page > 1) {
                 setSearchParams({ ...Object.fromEntries([...searchParams]), page: page - 1 });
             } else {
-                fetchRoles();
+                reloadRoles();
             }
             closeDeleteModal();
         } catch (err) {

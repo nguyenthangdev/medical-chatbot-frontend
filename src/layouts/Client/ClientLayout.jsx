@@ -26,6 +26,7 @@ const ClientLayout = () => {
     sendMessage, 
     appendAssistantMessage,
     isLimitReached,
+    tokenQuota,
     loadConversation, 
     clearChat 
   } = useChat(
@@ -131,6 +132,7 @@ const ClientLayout = () => {
           sendMessage,
           appendAssistantMessage,
           isLimitReached,
+          tokenQuota,
           onChatHistoryCleared: handleChatHistoryCleared,
           isDarkMode,
           setIsDarkMode: handleThemeChange

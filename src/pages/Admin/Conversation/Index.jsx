@@ -1,6 +1,6 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+// /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { AlertTriangle, MessageCircle, Search, ShieldAlert, Trash2 } from "lucide-react";
@@ -8,6 +8,12 @@ import DataTable from "../../../components/Admin/DataTable";
 import Pagination from "../../../components/Admin/Pagination";
 import { getConversationsAPI, deleteConversationAPI, toggleConversationStatusAPI } from "../../../apis/Admin/conversation.api";
 import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; 
+
+const formatConversations = (conversations = []) => conversations.map(conv => ({
+    ...conv,
+    userName: conv.userId?.fullName || conv.userId?.email || 'N/A',
+    updatedDate: new Date(conv.updatedAt).toLocaleString("vi-VN")
+}));
 
 export default function ConversationIndex() {
     const navigate = useNavigate();
@@ -43,30 +49,42 @@ export default function ConversationIndex() {
         { header: "Cập nhật lần cuối", accessor: "updatedDate" }, 
     ];
 
-    const fetchConversations = useCallback(async () => {
+    // 2. FETCH DATA (CHẶN NẾU KHÔNG CÓ QUYỀN)
+    const reloadConversations = async () => {
         if (authLoading || !hasPermission) return;
         try {
             const params = { page, limit, keyword };
             const res = await getConversationsAPI(params);
-            
-            const formattedData = res.data.map(conv => ({
-                ...conv,
-                userName: conv.userId?.fullName || conv.userId?.email || 'N/A',
-                updatedDate: new Date(conv.updatedAt).toLocaleString("vi-VN")
-            }));
-
-            setConversations(formattedData);
+            setConversations(formatConversations(res.data));
             setPagination(res.pagination);
             if(res.keyword) setSearchInput(res.keyword);
         } catch (error) {
             // toast.error("Lỗi tải danh sách cuộc hội thoại!");
             console.log("Lỗi tải danh sách cuộc hội thoại!")
         }
-    }, [page, limit, keyword, authLoading, hasPermission]);
+    };
 
     useEffect(() => {
-        fetchConversations();
-    }, [fetchConversations]);
+        if (authLoading || !hasPermission) return undefined;
+
+        let cancelled = false;
+        const params = { page, limit, keyword };
+
+        getConversationsAPI(params)
+            .then((res) => {
+                if (cancelled) return;
+                setConversations(formatConversations(res.data));
+                setPagination(res.pagination);
+                if(res.keyword) setSearchInput(res.keyword);
+            })
+            .catch(() => {
+                if (!cancelled) console.log("Lỗi tải danh sách cuộc hội thoại!")
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [page, limit, keyword, authLoading, hasPermission]);
 
     const updateParams = (newParams) => {
         const currentParams = Object.fromEntries([...searchParams]);
@@ -89,7 +107,7 @@ export default function ConversationIndex() {
             if (conversations.length === 1 && page > 1) {
                 updateParams({ page: page - 1 });
             } else {
-                fetchConversations();
+                reloadConversations();
             }
             closeDeleteModal();
         } catch (err) {
@@ -104,7 +122,7 @@ export default function ConversationIndex() {
         try {
             await toggleConversationStatusAPI(id);
             toast.success("Cập nhật trạng thái thành công!");
-            fetchConversations();
+            reloadConversations();
         } catch (error) {
             toast.error("Lỗi cập nhật trạng thái!");
         }

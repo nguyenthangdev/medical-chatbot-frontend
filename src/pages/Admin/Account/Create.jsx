@@ -1,12 +1,13 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowLeft, KeyRound, Loader2, Mail, Save, ShieldAlert, ShieldUser, UserRound } from "lucide-react";
 import { createAccountAPI } from "../../../apis/Admin/account.api";
 import { getRolesAPI } from "../../../apis/Admin/role.api";
 import { useAuth } from '../../../contexts/Admin/AdminAuthContext';
+import PasswordStrength from "../../../components/Client/PasswordStrength";
 
 export default function AccountCreate() {
     const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function AccountCreate() {
     const { 
         register, 
         handleSubmit, 
+        control,
         formState: { errors } 
     } = useForm({
         defaultValues: {
@@ -23,6 +25,7 @@ export default function AccountCreate() {
             status: 'active'
         }
     });
+    const passwordValue = useWatch({ control, name: 'password', defaultValue: '' });
     const hasPermission = user?.role_id?.isSystemAdmin || user?.role_id?.permissions?.includes('accounts_create');
     useEffect(() => {
         if (!isLoading && !hasPermission) {
@@ -151,15 +154,38 @@ export default function AccountCreate() {
                             <KeyRound className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="password"
-                        placeholder="Ít nhất 6 ký tự"
+                        placeholder="Ít nhất 8 ký tự, có chữ hoa và chữ số"
                         {...register("password", { 
                             required: "Vui lòng nhập mật khẩu",
-                            minLength: { value: 6, message: "Mật khẩu phải có ít nhất 6 ký tự" }
+                            minLength: { value: 8, message: "Mật khẩu phải có ít nhất 8 ký tự" },
+                            pattern: {
+                                value: /^(?=.*[A-Z])(?=.*\d).+$/,
+                                message: "Mật khẩu phải có ít nhất 1 chữ hoa và 1 chữ số"
+                            }
                         })}
                                 className={`h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-4 focus:ring-sky-200 ${errors.password ? 'border-rose-300' : 'border-slate-300 focus:border-sky-400'}`}
                     />
                         </div>
-                        {errors.password && <p className="mt-2 text-sm font-medium text-rose-600">{errors.password.message}</p>}
+                        <PasswordStrength password={passwordValue} error={errors.password} />
+                </div>
+
+                <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            Xác nhận mật khẩu <span className="text-rose-500">*</span>
+                    </label>
+                        <div className="relative">
+                            <KeyRound className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                        type="password"
+                        placeholder="Nhập lại mật khẩu"
+                        {...register("confirmPassword", {
+                            required: "Vui lòng xác nhận mật khẩu",
+                            validate: (value, formValues) => value === formValues.password || "Mật khẩu xác nhận không khớp"
+                        })}
+                                className={`h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-4 focus:ring-sky-200 ${errors.confirmPassword ? 'border-rose-300' : 'border-slate-300 focus:border-sky-400'}`}
+                    />
+                        </div>
+                        {errors.confirmPassword && <p className="mt-2 text-sm font-medium text-rose-600">{errors.confirmPassword.message}</p>}
                 </div>
 
                 {/* Role & Status (Responsive: 1 cột trên mobile, 2 cột trên md) */}

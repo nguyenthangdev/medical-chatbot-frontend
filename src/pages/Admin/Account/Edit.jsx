@@ -1,17 +1,19 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { ArrowLeft, Loader2, Mail, Save, ShieldAlert, ShieldUser, UserRound } from "lucide-react";
+import { ArrowLeft, KeyRound, Loader2, Mail, Save, ShieldAlert, ShieldUser, UserRound } from "lucide-react";
 import { getAccountByIdAPI, updateAccountAPI } from "../../../apis/Admin/account.api";
 import { getRolesAPI } from "../../../apis/Admin/role.api"; 
 import { useAuth } from '../../../contexts/Admin/AdminAuthContext';
+import PasswordStrength from "../../../components/Client/PasswordStrength";
 
 export default function AccountEdit() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { register, handleSubmit, reset, formState: { errors } } = useForm();
+    const { register, handleSubmit, reset, control, formState: { errors } } = useForm();
+    const passwordValue = useWatch({ control, name: 'password', defaultValue: '' });
 
     const [roles, setRoles] = useState([]); // State lưu Role
     const [isFetchingDetail, setIsFetchingDetail] = useState(true);
@@ -72,11 +74,16 @@ export default function AccountEdit() {
                 role_id: data.role_id, // Đẩy lên Backend bằng key role_id
                 status: data.status
             };
+            if (data.password) {
+                payload.password = data.password;
+                payload.confirmPassword = data.confirmPassword;
+            }
             await updateAccountAPI(id, payload);
             toast.success("Cập nhật tài khoản thành công!");
             navigate(`/admin/accounts/${id}`);
         } catch (error) {
-            toast.error("Lỗi khi cập nhật tài khoản!");
+            // toast.error("Lỗi khi cập nhật tài khoản!");
+            console.log("error from Account/Edit", error)
         } finally {
             setIsSaving(false);
         }
@@ -162,6 +169,47 @@ export default function AccountEdit() {
                             <option value="active">Hoạt động</option>
                             <option value="inactive">Đã khóa</option>
                         </select>
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Mật khẩu mới</label>
+                        <div className="relative">
+                            <KeyRound className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="password"
+                                placeholder="Bỏ trống nếu không đổi"
+                                {...register("password", {
+                                    validate: (value) => {
+                                        if (!value) return true;
+                                        if (value.length < 8) return "Mật khẩu phải có ít nhất 8 ký tự";
+                                        if (!/[A-Z]/.test(value) || !/[0-9]/.test(value)) return "Mật khẩu phải có ít nhất 1 chữ hoa và 1 chữ số";
+                                        return true;
+                                    }
+                                })}
+                                className={`h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:ring-4 focus:ring-sky-200 ${errors.password ? "border-rose-300" : "border-slate-300 focus:border-sky-400"}`}
+                            />
+                        </div>
+                        <PasswordStrength password={passwordValue} error={errors.password} />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Xác nhận mật khẩu mới</label>
+                        <div className="relative">
+                            <KeyRound className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="password"
+                                placeholder="Nhập lại mật khẩu mới"
+                                {...register("confirmPassword", {
+                                    validate: (value, formValues) => {
+                                        if (!formValues.password) return true;
+                                        if (!value) return "Vui lòng xác nhận mật khẩu";
+                                        return value === formValues.password || "Mật khẩu xác nhận không khớp";
+                                    }
+                                })}
+                                className={`h-12 w-full rounded-2xl border bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:ring-4 focus:ring-sky-200 ${errors.confirmPassword ? "border-rose-300" : "border-slate-300 focus:border-sky-400"}`}
+                            />
+                        </div>
+                        {errors.confirmPassword && <p className="mt-2 text-sm font-medium text-rose-600">{errors.confirmPassword.message}</p>}
                     </div>
                 </div>
 

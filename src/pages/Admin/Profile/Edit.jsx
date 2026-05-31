@@ -14,17 +14,25 @@ import {
     UserRound
 } from "lucide-react";
 import { useAuth } from "../../../contexts/Admin/AdminAuthContext.jsx";
-import { updateMyProfileAPI } from "../../../apis/Admin/myProfile.api";
+import { changeMyPasswordAPI, updateMyProfileAPI } from "../../../apis/Admin/myProfile.api";
 import { uploadImageAPI } from "../../../apis/General/upload.api.js";
+import PasswordStrength from "../../../components/Client/PasswordStrength.jsx";
 
 export default function ProfileEdit() {
     const navigate = useNavigate();
     const { register, handleSubmit, reset, formState: { errors } } = useForm();
-    const { refreshUser, user, isLoading } = useAuth();
+    const { refreshUser, user, isLoading, logout } = useAuth();
     
     const [isSaving, setIsSaving] = useState(false); 
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [selectedFile, setSelectedFile] = useState(null);
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
+    const [passwordError, setPasswordError] = useState('');
     const fileInputRef = useRef();
     
     useEffect(() => {
@@ -42,6 +50,43 @@ export default function ProfileEdit() {
         if (file) {
             setSelectedFile(file);
             setAvatarPreview(URL.createObjectURL(file)); 
+        }
+    };
+
+    const handlePasswordFieldChange = (field, value) => {
+        setPasswordForm((current) => ({ ...current, [field]: value }));
+        setPasswordError('');
+    };
+
+    const handleChangePassword = async () => {
+        if (!passwordForm.currentPassword) {
+            setPasswordError('Vui lòng nhập mật khẩu hiện tại');
+            return;
+        }
+
+        if (!passwordForm.newPassword) {
+            setPasswordError('Vui lòng nhập mật khẩu mới');
+            return;
+        }
+
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            setPasswordError('Mật khẩu xác nhận không khớp');
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            const res = await changeMyPasswordAPI(passwordForm);
+            toast.success(res.message);
+            setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            setPasswordError('');
+            await logout();
+        } catch (error) {
+            const message = error.response?.data?.message || 'Không thể đổi mật khẩu!';
+            setPasswordError(message);
+            // toast.error(message);
+        } finally {
+            setIsChangingPassword(false);
         }
     };
 
@@ -66,6 +111,7 @@ export default function ProfileEdit() {
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Lỗi khi cập nhật thông tin!";
             toast.error(errorMessage);
+            // console.log("error from Profile/Edit", errorMessage)
         } finally {
             setIsSaving(false);
         }
@@ -217,6 +263,83 @@ export default function ProfileEdit() {
                     </div>
                 </div>
             </form>
+
+            <section className="rounded-[28px] border border-slate-300 bg-white p-6 shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+                <div className="mb-6 flex items-start gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+                        <LockKeyhole size={20} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-semibold text-slate-950">Đổi mật khẩu</h2>
+                        <p className="mt-1 text-sm text-slate-500">Nhập mật khẩu hiện tại trước khi tạo mật khẩu mới.</p>
+                    </div>
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Mật khẩu hiện tại</label>
+                        <div className="relative">
+                            <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="password"
+                                value={passwordForm.currentPassword}
+                                onChange={(e) => handlePasswordFieldChange('currentPassword', e.target.value)}
+                                className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                                placeholder="Nhập mật khẩu hiện tại"
+                                autoComplete="current-password"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Mật khẩu mới</label>
+                        <div className="relative">
+                            <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="password"
+                                value={passwordForm.newPassword}
+                                onChange={(e) => handlePasswordFieldChange('newPassword', e.target.value)}
+                                className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                                placeholder="Tạo mật khẩu mới"
+                                autoComplete="new-password"
+                            />
+                        </div>
+                        <PasswordStrength
+                            password={passwordForm.newPassword}
+                            error={passwordError ? { message: passwordError } : null}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">Xác nhận mật khẩu mới</label>
+                        <div className="relative">
+                            <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="password"
+                                value={passwordForm.confirmPassword}
+                                onChange={(e) => handlePasswordFieldChange('confirmPassword', e.target.value)}
+                                className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                                placeholder="Nhập lại mật khẩu mới"
+                                autoComplete="new-password"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-6 border-t border-slate-200 pt-6">
+                    <button
+                        type="button"
+                        onClick={handleChangePassword}
+                        disabled={isChangingPassword}
+                        className={`inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-semibold text-white shadow-sm transition ${
+                            isChangingPassword ? 'cursor-not-allowed bg-sky-400' : 'bg-sky-600 hover:bg-sky-700'
+                        }`}
+                    >
+                        {isChangingPassword ? <Loader2 size={17} className="animate-spin" /> : <LockKeyhole size={17} />}
+                        {isChangingPassword ? 'Đang đổi...' : 'Đổi mật khẩu'}
+                    </button>
+                </div>
+            </section>
         </div>
     );
 }

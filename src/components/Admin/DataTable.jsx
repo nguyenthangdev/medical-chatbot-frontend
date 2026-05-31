@@ -9,6 +9,7 @@ export default function DataTable({
     onToggle,
     actions = ["view", "edit", "delete"],
     hideActionsIf,
+    hideEditIf,
     hideDeleteIf
 }) {
     return (
@@ -59,7 +60,7 @@ export default function DataTable({
                                                     <Eye size={16} />
                                                 </Link>
                                             )}
-                                            {actions?.includes("edit") && (
+                                            {actions?.includes("edit") && !(hideEditIf && hideEditIf(row)) && (
                                                 <Link to={`${basePath}/${row._id || row.id}/edit`} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700" title="Chỉnh sửa">
                                                     <Pencil size={16} />
                                                 </Link>

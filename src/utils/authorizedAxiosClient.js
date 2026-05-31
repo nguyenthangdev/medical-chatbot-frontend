@@ -23,6 +23,10 @@ authorizedAxiosInstance.interceptors.response.use((response) => {
   }
 
   if (error.response?.status === 401) {
+    if (error.config?.skipAuthRedirect) {
+      return Promise.reject(error);
+    }
+
     await fetchLogoutAPI().catch(() => {}); 
 
     const event = new CustomEvent('client-force-logout');
@@ -61,7 +65,7 @@ authorizedAxiosInstance.interceptors.response.use((response) => {
     });
   }
 
-  if (error.response?.status !== 410) {
+  if (error.response?.status !== 410 && !error.config?.skipErrorToast) {
     toast.error(error.response?.data?.message || error?.message);
   }
 
