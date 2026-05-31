@@ -139,7 +139,6 @@ export default function AccountEdit() {
                         <p className="mt-2 text-xs text-slate-400">Email là thông tin định danh, không thể thay đổi.</p>
                 </div>
 
-                    {/* CẬP NHẬT SELECT ROLE TẠI ĐÂY */}
                     <div>
                         <label className="mb-2 block text-sm font-semibold text-slate-700">Nhóm quyền <span className="text-rose-500">*</span></label>
                         <div className="relative">

@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 
@@ -55,7 +54,6 @@ export default function DataTable({
                                         <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">Mặc định hệ thống</span>
                                     ) : (
                                         <div className="flex items-center justify-end gap-2">
-                                            {/* NÚT XEM: Luôn hiển thị nếu có quyền view */}
                                             {actions?.includes("view") && (
                                                 <Link to={`${basePath}/${row._id || row.id}`} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 text-slate-500 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700" title="Xem chi tiết">
                                                     <Eye size={16} />
@@ -67,7 +65,6 @@ export default function DataTable({
                                                 </Link>
                                             )}
                                             
-                                            {/* Nếu là tài khoản hệ thống thì chỉ hiện nhãn bảo vệ, ngược lại hiện thao tác tương ứng */}
                                             {hideDeleteIf && hideDeleteIf(row) ? (
                                                 <span className="inline-flex rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600">Bảo vệ</span>
                                             ) : (

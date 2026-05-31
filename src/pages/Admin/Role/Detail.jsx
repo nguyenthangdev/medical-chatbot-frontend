@@ -1,21 +1,19 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { toast } from "react-toastify";
 import { ArrowLeft, CalendarDays, FileText, Hash, Pencil, Shield, ShieldAlert } from "lucide-react";
 import { getRoleDetailAPI } from "../../../apis/Admin/role.api";
-import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; // DÙNG useAuth CHUẨN
+import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; 
 
 export default function RoleDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     
     const [roleDetail, setRoleDetail] = useState(null);
-    const [isFetchingDetail, setIsFetchingDetail] = useState(true); // Đổi tên để không trùng Context
+    const [isFetchingDetail, setIsFetchingDetail] = useState(true); 
     
-    const { user: adminUser, isLoading: authLoading } = useAuth(); // LẤY AUTH
+    const { user: adminUser, isLoading: authLoading } = useAuth();
 
-    // KIỂM TRA QUYỀN
     const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('roles_view');
     const canEdit = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('roles_edit');
 
@@ -44,7 +42,6 @@ export default function RoleDetail() {
         fetchDetail();
     }, [id, authLoading, hasPermission, navigate]);
 
-    // GỘP LOADING (AUTH VÀ LẤY CHI TIẾT)
     if (authLoading) {
         return (
             <div className="max-w-5xl rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
@@ -57,7 +54,6 @@ export default function RoleDetail() {
         );
     }
 
-    // CHẶN GIAO DIỆN NẾU KHÔNG CÓ QUYỀN
     if (!hasPermission) {
         return (
             <div className="rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">

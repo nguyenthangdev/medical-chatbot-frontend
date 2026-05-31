@@ -21,7 +21,7 @@ const SmoothTyping = ({ text }) => {
     }, 15); // Tốc độ gõ: 15 mili-giây / 1 ký tự
 
     return () => clearInterval(interval);
-  }, []); // <-- Cực kỳ quan trọng: Array rỗng [] giúp interval không bao giờ bị chết giữa chừng
+  }, []); // Array rỗng [] giúp interval không bao giờ bị chết giữa chừng
 
   return <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{displayedText}</p>;
 };

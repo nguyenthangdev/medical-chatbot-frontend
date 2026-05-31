@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Bot, MessageCircle, Search, ShieldAlert, UserRound } from "lucide-react";
 import { useAdminChat } from "../../../hooks/Admin/useAdminChat";
-import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; // THÊM IMPORT
+import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; 
 
 export default function ConversationDetail() {
   const { id } = useParams();
@@ -12,9 +12,8 @@ export default function ConversationDetail() {
   const { messages, loading: hookLoading, error, selectConversation } = useAdminChat();
   const [search, setSearch] = useState("");
 
-  const { user: adminUser, isLoading: authLoading } = useAuth(); // LẤY AUTH
+  const { user: adminUser, isLoading: authLoading } = useAuth();
 
-  // 1. KIỂM TRA QUYỀN
   const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('conversations_view');
 
   useEffect(() => {
@@ -25,7 +24,6 @@ export default function ConversationDetail() {
   }, [authLoading, hasPermission, navigate]);
 
   useEffect(() => {
-    // CHỈ CHỌN VÀ TẢI TIN NHẮN NẾU ĐÃ LOAD XONG AUTH VÀ CÓ QUYỀN
     if (authLoading || !hasPermission) return;
     selectConversation(id);
   }, [id, selectConversation, authLoading, hasPermission]);
@@ -38,7 +36,6 @@ export default function ConversationDetail() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [filteredMessages]);
 
-  // 2. GỘP CHUNG LOADING CỦA AUTH VÀ CUSTOM HOOK
   if (authLoading || hookLoading) {
     return (
         <div className="h-[85vh] rounded-[28px] border border-slate-300 bg-white p-6 shadow-sm">
@@ -51,7 +48,6 @@ export default function ConversationDetail() {
     );
   }
 
-  // 3. CHẶN NẾU KHÔNG CÓ QUYỀN HOẶC CÓ LỖI
   if (!hasPermission) {
     return (
         <div className="rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">

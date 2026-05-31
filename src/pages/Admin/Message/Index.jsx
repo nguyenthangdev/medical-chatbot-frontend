@@ -1,18 +1,18 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useCallback } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom"; // THÊM useNavigate
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { AlertTriangle, Bot, Filter, MessageSquareText, Search, ShieldAlert, Trash2, UserRound } from "lucide-react";
 import DataTable from "../../../components/Admin/DataTable";
 import Pagination from "../../../components/Admin/Pagination";
 import { getAllMessagesAPI, deleteMessageAPI, toggleMessageStatusAPI } from "../../../apis/Admin/message.api";
 import { getConversationsAPI } from "../../../apis/Admin/conversation.api";
-import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; // THÊM IMPORT
+import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; 
 
 export default function MessageIndex() {
     const navigate = useNavigate();
-    const { user: adminUser, isLoading: authLoading } = useAuth(); // LẤY AUTH
+    const { user: adminUser, isLoading: authLoading } = useAuth();
 
     const [messages, setMessages] = useState([]);
     const [conversations, setConversations] = useState([]); 
@@ -29,7 +29,6 @@ export default function MessageIndex() {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // 1. KIỂM TRA QUYỀN (chats_view)
     const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('chats_view');
 
     useEffect(() => {
@@ -61,7 +60,6 @@ export default function MessageIndex() {
         },
     ];
 
-    // 2. FETCH DATA CONVERSATIONS (CHẶN NẾU KHÔNG CÓ QUYỀN)
     useEffect(() => {
         if (authLoading || !hasPermission) return;
         const fetchConvs = async () => {
@@ -75,7 +73,6 @@ export default function MessageIndex() {
         fetchConvs();
     }, [authLoading, hasPermission]);
 
-    // 3. FETCH DATA MESSAGES (CHẶN NẾU KHÔNG CÓ QUYỀN)
     const fetchMessages = useCallback(async () => {
         if (authLoading || !hasPermission) return;
         try {
@@ -146,7 +143,6 @@ export default function MessageIndex() {
         }
     };
 
-    // 4. HIỂN THỊ SPINNER TOÀN CỤC KHI ĐANG CHECK AUTH
     if (authLoading) {
         return (
             <div className="rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
@@ -159,7 +155,6 @@ export default function MessageIndex() {
         );
     }
 
-    // 5. CHẶN GIAO DIỆN NẾU KHÔNG CÓ QUYỀN
     if (!hasPermission) {
         return (
             <div className="rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">

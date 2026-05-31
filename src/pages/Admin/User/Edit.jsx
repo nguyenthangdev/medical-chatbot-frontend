@@ -5,7 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowLeft, Loader2, Mail, Phone, Save, ShieldAlert, UserRound } from "lucide-react";
 import { getUserByIdAPI, updateUserAPI } from "../../../apis/Admin/user.api";
-import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; // THÊM IMPORT
+import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; 
 
 export default function UserEdit() {
     const { id } = useParams();
@@ -15,9 +15,8 @@ export default function UserEdit() {
     const [isFetchingDetail, setIsFetchingDetail] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    const { user: adminUser, isLoading: authLoading } = useAuth(); // LẤY AUTH VÀ ĐỔI TÊN BIẾN
+    const { user: adminUser, isLoading: authLoading } = useAuth(); 
 
-    // 1. KIỂM TRA QUYỀN (users_edit)
     const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('users_edit');
 
     useEffect(() => {
@@ -27,7 +26,6 @@ export default function UserEdit() {
         }
     }, [authLoading, hasPermission, navigate]);
 
-    // 2. FETCH DATA KÉO DỮ LIỆU CŨ VÀO FORM
     useEffect(() => {
         if (authLoading || !hasPermission) return;
         const fetchUser = async () => {
@@ -49,7 +47,6 @@ export default function UserEdit() {
         fetchUser();
     }, [id, reset, navigate, authLoading, hasPermission]);
 
-    // 3. LƯU DỮ LIỆU
     const onSubmit = async (data) => {
         setIsSaving(true);
         try {
@@ -69,7 +66,6 @@ export default function UserEdit() {
         }
     };
 
-    // 4. HIỂN THỊ SPINNER KHI ĐANG CHECK AUTH HOẶC ĐANG FETCH DATA
     if (authLoading) {
         return (
             <div className="max-w-3xl rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">

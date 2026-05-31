@@ -45,7 +45,7 @@ const ChatPage = () => {
   const [currentTime, setCurrentTime] = useState(() => getVietnamTime());
   const isNewChat = (messages ?? []).length === 0 && !loading && !loadingConversation;
 
-  // AUTO SCROLL XỊN SÒ (Dùng MutationObserver để theo dõi chữ rớt xuống theo thời gian thực)
+  // AUTO SCROLL (Dùng MutationObserver để theo dõi chữ rớt xuống theo thời gian thực)
   useEffect(() => {
     const chatContainer = chatContainerRef.current;
     if (!chatContainer) return;

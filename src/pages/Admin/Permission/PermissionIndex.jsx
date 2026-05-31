@@ -1,12 +1,11 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // THÊM useNavigate
+import { useNavigate } from 'react-router-dom'; 
 import { toast } from 'react-toastify';
 import { ArrowLeft, Check, KeyRound, Loader2, Save, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { getRolesAPI, updatePermissionsAPI } from '../../../apis/Admin/role.api';
-import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; // THÊM IMPORT AUTH
+import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; 
 
-// Định nghĩa cấu trúc quyền tĩnh của hệ thống
 const permissionMatrix = [
   {
     groupName: "Quản lý Tài khoản người dùng",
@@ -31,7 +30,7 @@ const permissionMatrix = [
       { key: "roles_view", label: "Xem danh sách nhóm quyền" },
       { key: "roles_create", label: "Thêm nhóm quyền" },
       { key: "roles_edit", label: "Chỉnh nhóm quyền" },
-      { key: "roles_delete", label: "Xóa nhóm quyền" }, // ĐÃ BỔ SUNG QUYỀN XÓA
+      { key: "roles_delete", label: "Xóa nhóm quyền" },
       { key: "roles_permissions", label: "Phân quyền" },
     ]
   },
@@ -63,13 +62,11 @@ export default function PermissionIndex() {
   const navigate = useNavigate();
   const [roles, setRoles] = useState([]);
   
-  // Tách riêng 2 trạng thái Loading
   const [isFetchingRoles, setIsFetchingRoles] = useState(true); 
   const [isSaving, setIsSaving] = useState(false);
 
-  const { user: adminUser, isLoading: authLoading } = useAuth(); // LẤY AUTH
+  const { user: adminUser, isLoading: authLoading } = useAuth(); 
 
-  // 1. KIỂM TRA QUYỀN (roles_permissions)
   const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('roles_permissions');
 
   useEffect(() => {
@@ -79,7 +76,6 @@ export default function PermissionIndex() {
     }
   }, [authLoading, hasPermission, navigate]);
 
-  // 2. FETCH DATA (CHẶN NẾU KHÔNG CÓ QUYỀN)
   useEffect(() => {
     if (authLoading || !hasPermission) return;
 
@@ -114,7 +110,6 @@ export default function PermissionIndex() {
     }));
   };
 
-  // 3. LƯU DỮ LIỆU
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -129,7 +124,6 @@ export default function PermissionIndex() {
     }
   };
 
-  // 4. HIỂN THỊ SPINNER KHI ĐANG CHECK AUTH HOẶC FETCH ROLES
   if (authLoading) {
     return (
       <div className="rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
@@ -142,7 +136,6 @@ export default function PermissionIndex() {
     );
   }
 
-  // 5. CHẶN GIAO DIỆN NẾU KHÔNG CÓ QUYỀN
   if (!hasPermission) {
     return (
       <div className="rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">

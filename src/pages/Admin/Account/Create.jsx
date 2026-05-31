@@ -10,7 +10,7 @@ import { useAuth } from '../../../contexts/Admin/AdminAuthContext';
 
 export default function AccountCreate() {
     const navigate = useNavigate();
-    const [roles, setRoles] = useState([]); // State lưu danh sách Role
+    const [roles, setRoles] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const { user, isLoading } = useAuth();
     const { 

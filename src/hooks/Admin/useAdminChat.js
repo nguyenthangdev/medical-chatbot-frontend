@@ -9,7 +9,6 @@ export const useAdminChat = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Lấy danh sách conversations
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true)

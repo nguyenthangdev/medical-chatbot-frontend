@@ -22,11 +22,9 @@ export default function RoleIndex() {
     const limit = parseInt(searchParams.get("limit")) || 10;
     const keyword = searchParams.get("keyword") || "";
 
-    // STATE CHO MODAL XÓA
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // KIỂM TRA CÁC QUYỀN
     const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('roles_view');
     const canCreate = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('roles_create');
     const canConfigPermissions = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('roles_permissions');
@@ -70,7 +68,6 @@ export default function RoleIndex() {
         setSearchParams({ ...Object.fromEntries([...searchParams]), ...newParams });
     };
 
-    // LOGIC MỞ/ĐÓNG VÀ XÁC NHẬN XÓA TỪ MODAL
     const openDeleteModal = (id) => setDeleteModal({ isOpen: true, id });
     const closeDeleteModal = () => setDeleteModal({ isOpen: false, id: null });
 

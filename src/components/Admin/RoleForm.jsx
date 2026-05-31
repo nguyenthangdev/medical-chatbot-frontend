@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -12,7 +12,6 @@ export default function RoleForm() {
     const navigate = useNavigate();
     const isEdit = !!id;
 
-    // SỬ DỤNG REACT HOOK FORM
     const { register, handleSubmit, reset, formState: { errors } } = useForm({
         defaultValues: {
             title: "",
@@ -27,7 +26,6 @@ export default function RoleForm() {
 
     const { user: adminUser, isLoading: authLoading } = useAuth();
 
-    // 1. KIỂM TRA QUYỀN (Động: Tùy theo đang Tạo hay Sửa)
     const requiredPermission = isEdit ? 'roles_edit' : 'roles_create';
     const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes(requiredPermission);
 
@@ -38,7 +36,6 @@ export default function RoleForm() {
         }
     }, [authLoading, hasPermission, navigate]);
 
-    // 2. LẤY DỮ LIỆU ĐỔ VÀO FORM NẾU LÀ TRANG SỬA
     useEffect(() => {
         if (authLoading || !hasPermission || !isEdit) return;
 
@@ -50,7 +47,6 @@ export default function RoleForm() {
                     navigate('/admin/roles');
                     return;
                 }
-                // Đổ dữ liệu vào react-hook-form
                 reset({
                     title: res.title || "",
                     titleId: res.titleId || "",
@@ -68,7 +64,6 @@ export default function RoleForm() {
         fetchRoleDetail();
     }, [id, isEdit, reset, navigate, authLoading, hasPermission]);
 
-    // 3. XỬ LÝ SUBMIT FORM
     const onSubmit = async (data) => {
         setIsSaving(true);
         try {
@@ -87,7 +82,6 @@ export default function RoleForm() {
         }
     };
 
-    // 4. HIỂN THỊ SPINNER
     if (authLoading) {
         return (
             <div className="max-w-4xl rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
@@ -99,7 +93,6 @@ export default function RoleForm() {
         );
     }
 
-    // 5. CHẶN GIAO DIỆN
     if (!hasPermission) {
         return (
             <div className="max-w-3xl rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">

@@ -4,17 +4,16 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowLeft, CalendarDays, Mail, Pencil, Phone, ShieldAlert, UserRound } from "lucide-react";
 import { getUserByIdAPI } from "../../../apis/Admin/user.api";
-import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; // THÊM IMPORT
+import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; 
 
 export default function UserDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     
-    // Đổi tên state để tránh trùng lặp
     const [clientUser, setClientUser] = useState(null); 
     const [isFetchingDetail, setIsFetchingDetail] = useState(true);
 
-    const { user: adminUser, isLoading: authLoading } = useAuth(); // LẤY AUTH VÀ ĐỔI TÊN BIẾN
+    const { user: adminUser, isLoading: authLoading } = useAuth(); 
 
     const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('users_view');
     const canEdit = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('users_edit');
@@ -42,7 +41,6 @@ export default function UserDetail() {
         fetchDetail();
     }, [id, authLoading, hasPermission, navigate]);
 
-    // HIỂN THỊ SPINNER KHI ĐANG CHECK AUTH HOẶC ĐANG FETCH DATA
     if (authLoading) {
         return (
             <div className="max-w-4xl rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">

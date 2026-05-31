@@ -7,7 +7,6 @@ const UserMessageBubble = ({ msg, onResend, isDarkMode = false, textSizeClass = 
   const [editValue, setEditValue] = useState(msg.content);
   const [copied, setCopied] = useState(false);
 
-  // Xử lý Copy
   const handleCopy = () => {
     navigator.clipboard.writeText(msg.content);
     setCopied(true);

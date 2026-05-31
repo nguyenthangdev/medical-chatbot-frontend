@@ -26,7 +26,6 @@ export default function ConversationIndex() {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // 1. KIỂM TRA QUYỀN (conversations_view)
     const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('conversations_view');
 
     useEffect(() => {
@@ -44,7 +43,6 @@ export default function ConversationIndex() {
         { header: "Cập nhật lần cuối", accessor: "updatedDate" }, 
     ];
 
-    // 2. FETCH DATA (CHẶN NẾU KHÔNG CÓ QUYỀN)
     const fetchConversations = useCallback(async () => {
         if (authLoading || !hasPermission) return;
         try {
@@ -112,7 +110,6 @@ export default function ConversationIndex() {
         }
     };
 
-    // 3. HIỂN THỊ SPINNER KHI ĐANG CHECK AUTH
     if (authLoading) {
         return (
             <div className="rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
@@ -125,7 +122,6 @@ export default function ConversationIndex() {
         );
     }
 
-    // 4. CHẶN GIAO DIỆN NẾU KHÔNG CÓ QUYỀN
     if (!hasPermission) {
         return (
             <div className="rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">

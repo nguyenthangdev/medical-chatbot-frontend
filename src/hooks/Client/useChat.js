@@ -10,7 +10,7 @@ export const useChat = (userId, onChatUpdated) => {
   const [conversationId, setConversationId] = useState(null) 
   const loadRequestRef = useRef(0)
   
-  // 1. Thêm State kiểm tra xem phiên này đã hết hạn mức chưa
+  // Thêm State kiểm tra xem phiên này đã hết hạn mức chưa
   const [isLimitReached, setIsLimitReached] = useState(false)
 
   const sendMessage = useCallback(async (message, selectedModel = 'qwen', options = {}) => {
@@ -36,7 +36,7 @@ export const useChat = (userId, onChatUpdated) => {
 
       const res = await sendMessages(currentId, message, selectedModel, { signal: options.signal })
 
-      // 2. LOGIC KIỂM TRA HẠN MỨC (GIỐNG CLAUDE)
+      // LOGIC KIỂM TRA HẠN MỨC
       if (res.response && res.response.includes('Hết hạn mức')) {
         // Bật cờ khóa khung chat
         setIsLimitReached(true);
@@ -120,6 +120,5 @@ export const useChat = (userId, onChatUpdated) => {
     ])
   }, [])
 
-  // 3. NHỚ RETURN isLimitReached RA NGOÀI ĐỂ UI SỬ DỤNG
   return { messages, loading, loadingConversation, error, conversationId, isLimitReached, sendMessage, loadConversation, clearChat, appendAssistantMessage }
 }

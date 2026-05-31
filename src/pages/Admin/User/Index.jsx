@@ -7,11 +7,11 @@ import { AlertTriangle, Search, ShieldAlert, Trash2, Users } from "lucide-react"
 import DataTable from "../../../components/Admin/DataTable";
 import Pagination from "../../../components/Admin/Pagination"; 
 import { getUsersAPI, deleteUserAPI } from "../../../apis/Admin/user.api";
-import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; // THÊM IMPORT
+import { useAuth } from "../../../contexts/Admin/AdminAuthContext"; 
 
 export default function UserIndex() {
     const navigate = useNavigate();
-    const { user: adminUser, isLoading: authLoading } = useAuth(); // LẤY AUTH VÀ ĐỔI TÊN BIẾN
+    const { user: adminUser, isLoading: authLoading } = useAuth();
     
     const [users, setUsers] = useState([]);
     const [pagination, setPagination] = useState(null);
@@ -25,7 +25,6 @@ export default function UserIndex() {
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: null });
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // 1. KIỂM TRA QUYỀN (users_view)
     const hasPermission = adminUser?.role_id?.isSystemAdmin || adminUser?.role_id?.permissions?.includes('users_view');
 
     useEffect(() => {
@@ -42,7 +41,6 @@ export default function UserIndex() {
         { header: "Trạng thái", accessor: "status" },
     ];
 
-    // 2. FETCH DATA (CHẶN NẾU KHÔNG CÓ QUYỀN)
     const fetchUsers = useCallback(async () => {
         if (authLoading || !hasPermission) return;
         try {
@@ -89,7 +87,6 @@ export default function UserIndex() {
         }
     };
 
-    // 3. HIỂN THỊ SPINNER TOÀN CỤC KHI ĐANG CHECK AUTH
     if (authLoading) {
         return (
             <div className="rounded-3xl border border-slate-300 bg-white p-8 shadow-sm">
@@ -102,7 +99,6 @@ export default function UserIndex() {
         );
     }
 
-    // 4. CHẶN GIAO DIỆN NẾU KHÔNG CÓ QUYỀN
     if (!hasPermission) {
         return (
             <div className="rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">
