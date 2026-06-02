@@ -7,7 +7,6 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38B2AC?logo=tailwindcss&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 </div>
 
@@ -139,12 +138,12 @@ cp .env.example .env
 
 | Biến | Ví dụ | Mô tả |
 |---|---|---|
-| `VITE_API_ROOT` | `http://localhost:5000` | Base URL của Node.js back-end API. |
+| `VITE_API_ROOT` | `http://localhost:3000` | Base URL của Node.js back-end API. |
 
 Ví dụ:
 
 ```env
-VITE_API_ROOT=http://localhost:5000
+VITE_API_ROOT=http://localhost:3000
 ```
 
 > 💡 **Note**  
@@ -280,18 +279,6 @@ Checklist production:
 ```bash
 yarn lint
 ```
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Bổ sung loading/skeleton state thống nhất.
-- [ ] Hoàn thiện responsive cho toàn bộ màn hình admin.
-- [ ] Thêm test cho route bảo vệ và auth context.
-- [ ] Tối ưu trải nghiệm chat streaming nếu back-end hỗ trợ SSE/WebSocket.
-- [ ] Chuẩn hóa design system cho bảng, form, modal và filter.
-- [ ] Bổ sung error boundary cho các khu vực chính.
-- [ ] Tối ưu bundle size trước khi deploy production.
 
 ---
 
