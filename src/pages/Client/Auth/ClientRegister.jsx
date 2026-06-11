@@ -75,7 +75,7 @@ const ClientRegister = () => {
       {isSuccess && (
         <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
           <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-          Tài khoản đã được tạo. Vui lòng mở email và bấm link xác nhận trước khi đăng nhập.
+          Tài khoản đã được tạo. Bạn có thể quay lại trang đăng nhập để bắt đầu sử dụng dịch vụ.
         </div>
       )}
 
