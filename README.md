@@ -11,6 +11,9 @@
 </div>
 
 ---
+
+<img width="1919" height="1010" alt="Screenshot from 2026-06-11 20-45-33" src="https://github.com/user-attachments/assets/4baef58f-d263-4daf-9220-9a58fe693eba" />
+
 <img width="1919" height="1010" alt="Screenshot from 2026-06-11 20-44-07" src="https://github.com/user-attachments/assets/325ac818-86a4-4672-8800-5d615e2e8737" />
 
 ## 📌 Mô tả ngắn
