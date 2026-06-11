@@ -43,7 +43,7 @@ const ClientRegister = () => {
     try {
       await registerClientAPI(payload);
       setIsSuccess(true);
-      toast.success('Đăng ký thành công! Vui lòng kiểm tra email.');
+      toast.success('Đăng ký thành công!');
       setTimeout(() => navigate('/login'), 3000);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!');
